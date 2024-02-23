@@ -1,0 +1,326 @@
+
+uint64_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 sequences, each row = an instrument, the bits in the number = the notes
+  {
+    // seq 1 2
+    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0 },  // inst 1
+    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },  // inst 2
+    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },  // inst 3
+    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 },  // inst 4
+    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 },  // inst 5
+    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 },  // inst 6
+    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },  // inst 7
+    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 }   // inst 8
+  },
+    // seq 3 4
+  { { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 } },
+    // seq 5 6
+  { { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
+    { 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
+    { 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
+    { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 } },
+    // seq 7 8
+  { { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 } },
+    //seq 9 10
+  { { 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0 },
+    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 },
+    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0 } },
+    //seq 11 12
+  { { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 } },
+    //seq 13 14
+  { { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
+    { 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
+    { 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
+    { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 } },
+    //seq 15 16
+  { { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 } }
+};
+
+uint16_t kickPattens[8] = {0b1000000010000000,0b1000000000000000,0b1001001010001000,0b1001001001001000,0b1000100110100100,0b1010000110100000,0b1000000010001010,0b1000000010000100};
+uint16_t snarePatterns[8] = {0b0000100000001000,0b0000100101001000,0b0010010000100100,0b0010001000100010,0b0000001000001010,0b0010001000100001,0b0000000010000000,0b0000100001001000};
+uint16_t hatPatterns[8] = {0b1000100010001000,0b0000100000001000,0b0010010000100100,0b1010101010101010,0b1111111111111111,0b0100100100100100,0b0001001001001001,0b1001001001001010};
+void randomize(byte whotSeq, byte whotInst){
+  if(whotInst == 0){ // it its a drum track
+    // use pattern arrays to populate tracks TODO
+  }
+}
+
+void saveCurrentSequenceToEEPROM(int slot) {
+  if (slot >= 0 && slot < 4) {
+    uint32_t address = slot * (SEQUENCE_SIZE + 1);  // +1 for the flag
+    EEPROM.write(address, SEQUENCE_FLAG);           // Write the flag
+    address++;
+    for (int i = 0; i < 8; i++) {
+      for (int j = 0; j < 16; j++) {
+        EEPROM.put(address, seqMatrix[currentSeq][i][j]);
+        address += sizeof(uint32_t);
+        debug("wrote address ");
+        debugln(address);
+      }
+    }
+    EEPROM.commit();
+    debugln("done");
+  } else {
+    // Handle error: Invalid slot number
+    debugln("invalid slot number");
+  }
+}
+
+void recallSequenceFromEEPROM(int slot) {
+  if (slot >= 0 && slot < 4) {
+    uint32_t address = slot * (SEQUENCE_SIZE + 1);  // +1 for the flag
+    if (EEPROM.read(address) == SEQUENCE_FLAG) {    // Check the flag
+      address++;
+      for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 16; j++) {
+          uint32_t value;
+          EEPROM.get(address, value);
+          seqMatrix[currentSeq][i][j] = value;
+          address += sizeof(uint32_t);
+          debug("recalled address ");
+          debugln(address);
+        }
+      }
+      debugln("done");
+    } else {
+      debugln("wrong flag");
+      // Handle error: Invalid sequence flag, sequence not stored
+    }
+  } else {
+    debugln("invalid slot number");
+    // Handle error: Invalid slot number
+  }
+}
+
+// Save the current instrument to a slot
+void saveCurrentInstrumentToEEPROM(int slot) {
+  if (slot >= 0 && slot < 4) {
+    uint32_t address = slot * (SEQUENCE_SIZE + 1) + 1;  // Start of the sequence data (after the flag)
+    address += currentInst * 16 * sizeof(uint32_t);     // Offset to the current instrument
+
+    for (int j = 0; j < 16; j++) {
+      EEPROM.put(address, seqMatrix[currentSeq][currentInst][j]);
+      address += sizeof(uint32_t);
+    }
+
+    EEPROM.commit();
+  } else {
+    // Handle error: Invalid slot number
+  }
+}
+
+// Load the current instrument from a slot
+void loadCurrentInstrumentFromEEPROM(int slot) {
+  if (slot >= 0 && slot < 4) {
+    uint32_t address = slot * (SEQUENCE_SIZE + 1) + 1;  // Start of the sequence data (after the flag)
+    address += currentInst * 16 * sizeof(uint32_t);     // Offset to the current instrument
+
+    for (int j = 0; j < 16; j++) {
+      uint32_t value;
+      EEPROM.get(address, value);
+      seqMatrix[currentSeq][currentInst][j] = value;
+      address += sizeof(uint32_t);
+    }
+  } else {
+    // Handle error: Invalid slot number
+  }
+}
+
+
+
+// to begin with, just read seqMatrix[0][0][0-15]
+
+bool getNote(byte sequence, byte instrument, byte step, byte note) {
+  uint32_t thisStep = seqMatrix[sequence][instrument][step];
+  return (thisStep & (1UL << note)) != 0;  // Check if the specific bit is set and return the result
+}
+
+void drawStepState(uint8_t sequence, uint8_t instrument, uint8_t step) {
+  uint32_t thisStep = seqMatrix[sequence][instrument][step];
+  for (uint8_t i = 0; i < 8; i++) {      // iterate over 8 of the 32 potential bits in the uint32_t
+    bool thisBit = (thisStep >> i + viewOffset) & 1;  // check if the i-th bit is set
+    if (thisBit) {
+      setPixelXY(step, i, currentInstCol[0], currentInstCol[1], currentInstCol[2]);  // assume i is the Y-coordinate here
+    } else {
+    }
+  }
+}
+
+int fadedAmount = 0; // doesnt work very well
+void drawSeqOverview(uint8_t currentSeq) {
+  for (uint8_t selectInst = 0; selectInst < SEQUENCES; selectInst++) {
+    int currentRed = trackColors[selectInst][0] - fadedAmount;
+      if(currentRed < 1)currentRed = 5;
+      int currentGreen = trackColors[selectInst][1] - fadedAmount;
+      if(currentGreen < 1)currentGreen = 5;
+      int currentBlue = trackColors[selectInst][2] - fadedAmount;
+      if(currentBlue < 1)currentBlue = 5;
+    for (uint8_t step = 0; step < GRIDSTEPS; step++) {
+      if (seqMatrix[currentSeq][selectInst][step] > 0) {
+        setPixelXY(step, selectInst, currentRed, currentGreen, currentBlue);  // assume i is the Y-coordinate here
+      }
+    }
+  }
+}
+
+void setNote(uint8_t sequence, uint8_t instrument, uint8_t step, uint8_t note) {
+  if (note > 31) return;                             // Check if the note value is valid (0 to 31 because uint32_t has 32 bits)
+  uint32_t bitmask = 1UL << note;                    // Create a bitmask for the note
+  seqMatrix[sequence][instrument][step] |= bitmask;  // Set the bit in the seqMatrix for the specified sequence, instrument, and step
+}
+
+void clearNote(uint8_t sequence, uint8_t instrument, uint8_t step, uint8_t note) {
+  if (note > 31) return;                             // Check if the note value is valid (0 to 31 because uint32_t has 32 bits)
+  uint32_t bitmask = ~(1UL << note);                 // Create a bitmask for the note
+  seqMatrix[sequence][instrument][step] &= bitmask;  // Clear the bit in the seqMatrix for the specified sequence, instrument, and step
+}
+
+void clearCurrentGrid() {
+  for (byte j = 0; j < INSTRUMENTS; j++) {
+    for (byte i = 0; i < GRIDSTEPS; i++) {
+      seqMatrix[currentSeq][j][i] = 0;
+    }
+  }
+}
+
+void clearInst(byte whotSeq, byte whotInst){
+  for (byte i = 0; i < GRIDSTEPS; i++) {
+    seqMatrix[whotSeq][whotInst][i] = 0;
+  }
+}
+
+
+
+void toggleNote(uint8_t sequence, uint8_t instrument, uint8_t step, uint8_t note) {
+  if (note > 31) return;                             // Check if the note value is valid (0 to 31 because uint32_t has 32 bits)
+  uint32_t bitmask = 1UL << note;                    // Create a bitmask for the note
+  seqMatrix[sequence][instrument][step] ^= bitmask;  // Toggle the bit in the seqMatrix for the specified sequence, instrument, and step
+}
+
+
+struct TimedNote {
+  byte note;
+  unsigned long startTime;
+  unsigned long duration;
+};
+
+const int maxTimedNotes = 10;
+TimedNote timedNotes[maxTimedNotes];
+int currentTimedNote = 0;
+
+void addTimedNote(byte note, unsigned long duration) {
+  timedNotes[currentTimedNote].note = note;
+  timedNotes[currentTimedNote].startTime = millis();
+  timedNotes[currentTimedNote].duration = duration;
+
+  currentTimedNote = (currentTimedNote + 1) % maxTimedNotes;  // Circular buffer
+}
+
+void checkAndHandleTimedNotes() {
+  for (int i = 0; i < maxTimedNotes; i++) {
+    if (timedNotes[i].note != 0 && (millis() - timedNotes[i].startTime) > timedNotes[i].duration) {
+      MIDI.sendNoteOff(timedNotes[i].note, 127, 1);
+      timedNotes[i].note = 0;  // Reset the note to indicate it's handled
+    }
+  }
+}
+
+bool testBool = false;
+void handleStep(byte stepToHandle) {
+  
+  //INTERRUPT TESTING !!!
+  testBool = !testBool;
+  if(testBool){
+    digitalWrite(interruptPin, HIGH);
+    debugln("HIGH");
+  } else {
+    digitalWrite(interruptPin, LOW);
+    debugln("LOW");
+  }
+  //END INTERRUPT TESTING
+  
+// handle notes THIS ONLY ACTUALLY SCANS THE CURRENTLY VIEWED INSTRUMENT!!!
+  byte maxNotes = 16; //our datastructure actually allows 64bit steps but microbitOrchestra currently only likes 16bit
+  for(byte i = 0; i < maxNotes; i++){
+    byte actualNote = maxNotes - i;
+    if(getNote(currentSeq, currentInst, currentStep, i)){ //we found a note
+      triggerMidiNote(actualNote,currentInst);
+      if(i>=viewOffset && i<viewOffset + 7){ // if the triggered note is within the view
+        addSparkle(currentStep, i-viewOffset,500); // make that pixel sparkle for 500ms
+      }
+    }
+  }
+}
+
+void triggerMidiNote(byte noteToSend, byte channelToSend){
+  byte midiNote = noteToSend + 60;
+  MIDI.sendNoteOn(midiNote, 127, channelToSend);
+  addTimedNote(midiNote, 50);  // Assuming 50ms is the duration for each note
+}
+
+const int maxSize = 10;  // Maximum size of the stack
+int myStack[maxSize];    // Stack implemented as an array
+int top = -1;            // Initialize the top of the stack to -1 (empty)
+
+
+/*
+//LEGACY///
+void pushNotesToBeEnded(int value) {
+  if (top < maxSize - 1) {
+    top++;                 // Increment the top of the stack
+    myStack[top] = value;  // Push the value onto the stack
+  } else {
+  }
+}
+
+int popNotesToBeEnded() {
+  if (top >= 0) {
+    int poppedValue = myStack[top];  // Get the top value
+    top--;                           // Decrement the top of the stack
+    return poppedValue;
+  } else {
+    // Stack is empty, handle the error
+    return -1; // You can choose another value to indicate an error
+  }
+}
+*/
