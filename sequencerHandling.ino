@@ -11,7 +11,7 @@ uint64_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 seq
     { 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },  // inst 7
     { 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 }   // inst 8
   },
-    // seq 3 4
+  // seq 3 4
   { { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
@@ -20,7 +20,7 @@ uint64_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 seq
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
     { 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 } },
-    // seq 5 6
+  // seq 5 6
   { { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
     { 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
     { 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
@@ -29,7 +29,7 @@ uint64_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 seq
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
     { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 } },
-    // seq 7 8
+  // seq 7 8
   { { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 },
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
@@ -38,7 +38,7 @@ uint64_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 seq
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 } },
-    //seq 9 10
+  //seq 9 10
   { { 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0 },
     { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
     { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
@@ -47,7 +47,7 @@ uint64_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 seq
     { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
     { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 },
     { 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0 } },
-    //seq 11 12
+  //seq 11 12
   { { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
@@ -56,7 +56,7 @@ uint64_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 seq
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
     { 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 } },
-    //seq 13 14
+  //seq 13 14
   { { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
     { 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
     { 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
@@ -65,7 +65,7 @@ uint64_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 seq
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
     { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 } },
-    //seq 15 16
+  //seq 15 16
   { { 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 },
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 },
@@ -76,11 +76,11 @@ uint64_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 seq
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 } }
 };
 
-uint16_t kickPattens[8] = {0b1000000010000000,0b1000000000000000,0b1001001010001000,0b1001001001001000,0b1000100110100100,0b1010000110100000,0b1000000010001010,0b1000000010000100};
-uint16_t snarePatterns[8] = {0b0000100000001000,0b0000100101001000,0b0010010000100100,0b0010001000100010,0b0000001000001010,0b0010001000100001,0b0000000010000000,0b0000100001001000};
-uint16_t hatPatterns[8] = {0b1000100010001000,0b0000100000001000,0b0010010000100100,0b1010101010101010,0b1111111111111111,0b0100100100100100,0b0001001001001001,0b1001001001001010};
-void randomize(byte whotSeq, byte whotInst){
-  if(whotInst == 0){ // it its a drum track
+uint16_t kickPattens[8] = { 0b1000000010000000, 0b1000000000000000, 0b1001001010001000, 0b1001001001001000, 0b1000100110100100, 0b1010000110100000, 0b1000000010001010, 0b1000000010000100 };
+uint16_t snarePatterns[8] = { 0b0000100000001000, 0b0000100101001000, 0b0010010000100100, 0b0010001000100010, 0b0000001000001010, 0b0010001000100001, 0b0000000010000000, 0b0000100001001000 };
+uint16_t hatPatterns[8] = { 0b1000100010001000, 0b0000100000001000, 0b0010010000100100, 0b1010101010101010, 0b1111111111111111, 0b0100100100100100, 0b0001001001001001, 0b1001001001001010 };
+void randomize(byte whotSeq, byte whotInst) {
+  if (whotInst == 0) {  // it its a drum track
     // use pattern arrays to populate tracks TODO
   }
 }
@@ -178,24 +178,24 @@ bool getNote(byte sequence, byte instrument, byte step, byte note) {
 // inverted drawing Y axis
 void drawStepState(uint8_t sequence, uint8_t instrument, uint8_t step) {
   uint32_t thisStep = seqMatrix[sequence][instrument][step];
-  for (uint8_t i = 0; i < 8; i++) {      // iterate over 8 of the 32 potential bits in the uint32_t
+  for (uint8_t i = 0; i < 8; i++) {                   // iterate over 8 of the 32 potential bits in the uint32_t
     bool thisBit = (thisStep >> i + viewOffset) & 1;  // check if the i-th bit is set
     if (thisBit) {
-      setPixelXY(step,(GRIDROWS-1) - i, currentInstCol[0], currentInstCol[1], currentInstCol[2]);  // assume i is the Y-coordinate here
+      setPixelXY(step, (GRIDROWS - 1) - i, currentInstCol[0], currentInstCol[1], currentInstCol[2]);  // assume i is the Y-coordinate here
     } else {
     }
   }
 }
 
-int fadedAmount = 0; // doesnt work very well
+int fadedAmount = 0;  // doesnt work very well
 void drawSeqOverview(uint8_t currentSeq) {
   for (uint8_t selectInst = 0; selectInst < SEQUENCES; selectInst++) {
     int currentRed = trackColors[selectInst][0] - fadedAmount;
-      if(currentRed < 1)currentRed = 5;
-      int currentGreen = trackColors[selectInst][1] - fadedAmount;
-      if(currentGreen < 1)currentGreen = 5;
-      int currentBlue = trackColors[selectInst][2] - fadedAmount;
-      if(currentBlue < 1)currentBlue = 5;
+    if (currentRed < 1) currentRed = 5;
+    int currentGreen = trackColors[selectInst][1] - fadedAmount;
+    if (currentGreen < 1) currentGreen = 5;
+    int currentBlue = trackColors[selectInst][2] - fadedAmount;
+    if (currentBlue < 1) currentBlue = 5;
     for (uint8_t step = 0; step < GRIDSTEPS; step++) {
       if (seqMatrix[currentSeq][selectInst][step] > 0) {
         setPixelXY(step, selectInst, currentRed, currentGreen, currentBlue);  // assume i is the Y-coordinate here
@@ -224,7 +224,7 @@ void clearTrack(byte trackToClear) {
   }
 }
 
-void clearInst(byte whotSeq, byte whotInst){
+void clearInst(byte whotSeq, byte whotInst) {
   for (byte i = 0; i < GRIDSTEPS; i++) {
     seqMatrix[whotSeq][whotInst][i] = 0;
   }
@@ -246,9 +246,11 @@ struct TimedNote {
   byte channel;
 };
 
-const int maxTimedNotes = 10;
+const int maxTimedNotes = 100;
 TimedNote timedNotes[maxTimedNotes];
 int currentTimedNote = 0;
+
+int numActiveNotes = 0;
 
 void addTimedNote(byte note, unsigned long duration, byte midiChannel) {
   timedNotes[currentTimedNote].note = note;
@@ -256,6 +258,7 @@ void addTimedNote(byte note, unsigned long duration, byte midiChannel) {
   timedNotes[currentTimedNote].duration = duration;
   timedNotes[currentTimedNote].channel = midiChannel;
   currentTimedNote = (currentTimedNote + 1) % maxTimedNotes;  // Circular buffer
+  numActiveNotes++;
 }
 
 void checkAndHandleTimedNotes() {
@@ -263,16 +266,17 @@ void checkAndHandleTimedNotes() {
     if (timedNotes[i].note != 0 && (millis() - timedNotes[i].startTime) > timedNotes[i].duration) {
       MIDI.sendNoteOff(timedNotes[i].note, 127, timedNotes[i].channel);
       timedNotes[i].note = 0;  // Reset the note to indicate it's handled
+      numActiveNotes--;
     }
   }
 }
 
 bool testBool = false;
 void handleStep(byte stepToHandle) {
-  
+
   //INTERRUPT TESTING !!!
   testBool = !testBool;
-  if(testBool){
+  if (testBool) {
     digitalWrite(interruptPin, HIGH);
     //debugln("HIGH");
   } else {
@@ -280,38 +284,40 @@ void handleStep(byte stepToHandle) {
     //debugln("LOW");
   }
   //END INTERRUPT TESTING
-  
-// handle notes THIS ONLY ACTUALLY SCANS THE CURRENTLY VIEWED INSTRUMENT!!!
-  byte maxNotes = 16; //our datastructure actually allows 64bit steps but microbitOrchestra currently only likes 16bit
-  for(byte i = 0; i < maxNotes; i++){
-    //byte actualNote = maxNotes - i;
-    byte actualNote = i;
-    if(getNote(currentSeq, currentInst, currentStep, i)){ //we found a note
-      //debug("triggering note ");
-      //debug(actualNote);
-      //debug(" on channel");
-      //debugln(currentInst);
 
-      triggerMidiNote(actualNote,currentInst+1); //add one because midichannels start with 1
-      debug("viewOffset = ");
-      debug(viewOffset);
-      debug("  i = ");
-      debugln(i);
-      if(i>=viewOffset && i<=viewOffset + 7){ // if the triggered note is within the view
-        addSparkle(currentStep, (GRIDROWS-1) - (i-viewOffset),500); // make that pixel sparkle for 500ms, also invert Y axis 
-        debug("added a sparkle at step ");
-        debug(currentStep);
-        debug("   row ");
-        debugln((GRIDROWS-1) - (i-viewOffset));
+  // handle notes THIS ONLY ACTUALLY SCANS THE CURRENTLY VIEWED INSTRUMENT!!!
+  byte maxNotes = 16;  //our datastructure actually allows 64bit steps but microbitOrchestra currently only likes 16bit
+
+  for (byte currentTrack = 0; currentTrack < 8; currentTrack++) {
+    bool alreadyTriggeredSparkleForThisTrack = false;
+    for (byte i = 0; i < maxNotes; i++) {
+      byte actualNote = i;
+      if(getNote(currentSeq, currentTrack, currentStep, i)) {  //we found a note
+        triggerMidiNote(actualNote, currentTrack + 1);          //add one because midichannels start with 1
+        //need added logic here to only make sparkles fot the track we are viewing
+        if (mode == overviewMode) {
+          if (!alreadyTriggeredSparkleForThisTrack) {
+            currentInstCol[0] = trackColors[currentTrack][0];
+            currentInstCol[1] = trackColors[currentTrack][1];
+            currentInstCol[2] = trackColors[currentTrack][2];
+            addSparkle(currentStep, currentTrack, currentInstCol[0],currentInstCol[1],currentInstCol[2], 500);
+          }
+        } else {
+          if ((i >= viewOffset && i <= viewOffset + 7) && (currentTrack == currentInst)) {  // if the triggered note is within the view and we are viewing the track that is playing the note
+            addSparkle(currentStep, (GRIDROWS - 1) - (i - viewOffset),currentInstCol[0],currentInstCol[1],currentInstCol[2], 500);                // make that pixel sparkle for 500ms, also invert Y axis
+          }
+        }
       }
     }
   }
 }
 
-void triggerMidiNote(byte noteToSend, byte channelToSend){
-  byte midiNote = noteToSend + 60;
-  MIDI.sendNoteOn(midiNote, 127, channelToSend);
-  addTimedNote(midiNote, 50, channelToSend);  // Assuming 50ms is the duration for each note
+void triggerMidiNote(byte noteToSend, byte channelToSend) {
+  if (numActiveNotes < maxTimedNotes) {
+    byte midiNote = noteToSend + 60;
+    MIDI.sendNoteOn(midiNote, 127, channelToSend);
+    addTimedNote(midiNote, 50, channelToSend);  // Assuming 50ms is the duration for each note
+  }
 }
 
 const int maxSize = 10;  // Maximum size of the stack

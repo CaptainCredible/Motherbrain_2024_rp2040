@@ -27,10 +27,6 @@ byte inGridB = 17;  // right 8x8
 
 
 void handleButtPress(byte x, byte y) {  //also handles buttrelease
-  debug("raw x = ");
-  debug(x);
-  debug(" raw y = ");
-  debugln(y);
   switch (mode) {
     case instSeqMode:
       instSeqModeButts(x, y);
@@ -86,7 +82,7 @@ void instSeqModeButts(byte x, byte y) {
   } else {  // if shift is not held in
     byte invertedY = (GRIDROWS-1) - y;
     byte invertedOffsetY = invertedY + viewOffset;
-    debugln(invertedOffsetY);
+    //debugln(invertedOffsetY);
     toggleNote(currentSeq, currentInst, x, invertedOffsetY);      //toggle the note stored in seq 0, intrument 0, step x, note y
     if (!getNote(currentSeq, currentInst, x, invertedOffsetY)) {  //if we just turned this note off
       removeSparkle(x, y);                                    // stop the sparkle
@@ -325,7 +321,7 @@ void handleRotary() {
         if (rotaryMasterCounter < 0) {
           rotaryMasterCounter = rotaryMasterCounter * -1;
         }
-        drawRotaryMasterCounterOverSerial();
+        //drawRotaryMasterCounterOverSerial();
       }
       lastClkTime = millis();
     }

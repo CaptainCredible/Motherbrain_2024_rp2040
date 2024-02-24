@@ -1,31 +1,35 @@
+#include <Arduino.h> // Ensure Arduino.h is included for millis() and data types
+
 class Sparkle {
 private:
     uint16_t x, y;
     byte red, green, blue;
+    byte targetRed, targetGreen, targetBlue; // Target color components
     unsigned long timeSet;
     unsigned long lifespan;
 
 public:
-    Sparkle() : x(0), y(0), red(255), green(255), blue(255), lifespan(0), timeSet(0) {}
+    // Default constructor
+    Sparkle() : x(0), y(0), red(255), green(255), blue(255), targetRed(255), targetGreen(255), targetBlue(255), lifespan(0), timeSet(0) {}
 
-    Sparkle(uint16_t x, uint16_t y, unsigned long lifespan) 
-      : x(x), y(y), red(255), green(255), blue(255), lifespan(lifespan) {
+    // Constructor with target color
+    Sparkle(uint16_t x, uint16_t y, byte targetRed, byte targetGreen, byte targetBlue, unsigned long lifespan) 
+      : x(x), y(y), red(255), green(255), blue(255), targetRed(targetRed), targetGreen(targetGreen), targetBlue(targetBlue), lifespan(lifespan) {
         timeSet = millis();  // Capture the current time
     }
 
-    // Update the sparkle's brightness based on elapsed time
     void handle() {
         unsigned long elapsed = millis() - timeSet;
 
         if (elapsed < lifespan) {
             float factor = (float)elapsed / lifespan;
-            red = 255 + factor * (currentInstCol[0] - 255);
-            green = 255 + factor * (currentInstCol[1] - 255);
-            blue = 255 + factor * (currentInstCol[2] - 255);
+            red = 255 + factor * (targetRed - 255);
+            green = 255 + factor * (targetGreen - 255);
+            blue = 255 + factor * (targetBlue - 255);
         } else {
-            red = currentInstCol[0];
-            green = currentInstCol[1];
-            blue = currentInstCol[2];
+            red = targetRed;
+            green = targetGreen;
+            blue = targetBlue;
         }
     }
 
@@ -37,35 +41,30 @@ public:
         return y;
     }
 
-    // Display the sparkle on the grid
     void show() {
-        setPixelXY(x, y, red, green, blue);
+        setPixelXY(x, y, red, green, blue); // Implement setPixelXY to actually set the pixel on your LED grid
     }
 
-    // Check if the sparkle is "dead"
     bool isDead() const {
-        // Considering a sparkle dead if its color matches the global variable
-        return red == currentInstCol[0] && green == currentInstCol[1] && blue == currentInstCol[2];
+        return red == targetRed && green == targetGreen && blue == targetBlue;
     }
 };
 
 const int MAX_SPARKLES = 50;
 Sparkle sparkles[MAX_SPARKLES];
-int startIdx = 0;  // Points to the oldest sparkle
-int endIdx = 0;   // Points to the next empty slot
+int startIdx = 0;
+int endIdx = 0;
 
-// Check if buffer is empty
 bool isEmpty() {
     return startIdx == endIdx;
 }
 
-// Check if buffer is full
 bool isFull() {
     return (endIdx + 1) % MAX_SPARKLES == startIdx;
 }
 
-void addSparkle(uint16_t x, uint16_t y, unsigned long lifespan) {
-    sparkles[endIdx] = Sparkle(x, y,lifespan);
+void addSparkle(uint16_t x, uint16_t y, byte targetRed, byte targetGreen, byte targetBlue, unsigned long lifespan) {
+    sparkles[endIdx] = Sparkle(x, y, targetRed, targetGreen, targetBlue, lifespan);
     if (isFull()) {
         startIdx = (startIdx + 1) % MAX_SPARKLES;  // Remove the oldest sparkle
     }
@@ -73,7 +72,7 @@ void addSparkle(uint16_t x, uint16_t y, unsigned long lifespan) {
 }
 
 void updateSparkles() {
-  if(mode == instSeqMode){ // only do this shit if we are in seq mode bruv
+  if(true){ // Placeholder condition
     int idx = startIdx;
     while (idx != endIdx) {
         sparkles[idx].handle();
@@ -89,21 +88,19 @@ void removeSparkle(uint16_t targetX, uint16_t targetY) {
     int idx = startIdx;
     while (idx != endIdx) {
         if (sparkles[idx].getX() == targetX && sparkles[idx].getY() == targetY) {
-            // Clear the pixel corresponding to this sparkle
-            setPixelXY(targetX, targetY, 0, 0, 0);  // Assuming 0,0,0 is off/black
+            // Assuming setPixelXY to turn off the LED
+            setPixelXY(targetX, targetY, 0, 0, 0);  // Implement setPixelXY if not already
 
-            // Overwrite the sparkle to be deleted by shifting all subsequent sparkles one position backwards
+            // Shift sparkles
             int nextIdx = (idx + 1) % MAX_SPARKLES;
             while (nextIdx != endIdx) {
                 sparkles[idx] = sparkles[nextIdx];
                 idx = nextIdx;
                 nextIdx = (nextIdx + 1) % MAX_SPARKLES;
             }
-            // Adjust the endIdx to the new end of the buffer
-            endIdx = (endIdx - 1 + MAX_SPARKLES) % MAX_SPARKLES; // Decrease endIdx, but ensure it remains non-negative
-            return; // Exit after removing the sparkle
+            endIdx = (endIdx - 1 + MAX_SPARKLES) % MAX_SPARKLES;
+            return;
         }
         idx = (idx + 1) % MAX_SPARKLES;
     }
 }
-
