@@ -76,16 +76,24 @@ void instSeqModeButts(byte x, byte y) {
     } else if (x == 1 && y == 1) {
       debugln("okidoke");
       digitalWrite(interruptPin, HIGH);  // ask to be asked for i2c
+    } else if (y == 0 && x < 8) {         //one of the first 8 butts on top left
+      debugln("ping");
+      if (y == 0) {      // if top row page select buttons
+        currentSeq = x;  // Seq 1 2 3 or 4
+        numberToDisplay = x + 1;
+        textDisplayStartTime = millis();
+      }
+      displayNumber(x, 4, 3);
     }
 
 
   } else {  // if shift is not held in
-    byte invertedY = (GRIDROWS-1) - y;
+    byte invertedY = (GRIDROWS - 1) - y;
     byte invertedOffsetY = invertedY + viewOffset;
     //debugln(invertedOffsetY);
     toggleNote(currentSeq, currentInst, x, invertedOffsetY);      //toggle the note stored in seq 0, intrument 0, step x, note y
     if (!getNote(currentSeq, currentInst, x, invertedOffsetY)) {  //if we just turned this note off
-      removeSparkle(x, y);                                    // stop the sparkle
+      removeSparkle(x, y);                                        // stop the sparkle
     }
     testColor = 255;
     byte flippedY = 8 - y;
@@ -152,10 +160,9 @@ void overviewModeButts(byte x, byte y) {
       case 5:
       case 6:
       case 7:
-        if (y == 0) {  // if top row page select buttons
-          currentSeq = x;
+        if (y == 0) {      // if top row page select buttons
+          currentSeq = x;  // Seq 1 2 3 or 4
           numberToDisplay = x + 1;
-
           textDisplayStartTime = millis();
         }
         displayNumber(x, 4, 3);
@@ -253,8 +260,12 @@ void scanButtsNKnobs() {
   if (playButtonState != oldPlayButtonState) {
     if (playButtonState) {  // when button goes from off to on
       playing = !playing;
-      if (!playing) {
+      if(!playing){
         currentStep = -1;
+      } else if (playing) {
+        lastStepTime = millis();
+        currentStep = 0;
+        handleStep(currentStep);
       }
     }
     oldPlayButtonState = playButtonState;
