@@ -80,7 +80,7 @@ int rotaryMasterCounter = 0;                     // Keeps track of the encoder p
 int clkLastState = 0;                // Stores the last state of the CLK pin
 int swLastState = 0;
 unsigned long lastClkTime = 0;  // the last time the output pin was toggled
-unsigned long clkDebounceDelay = 2;     // the debounce time; increase if the output flickers
+unsigned long clkDebounceDelay = 1;     // the debounce time; increase if the output flickers
 unsigned long lastSwTime = 0;
 unsigned long swDebounceTime = 5;
 int swState = 0;
@@ -241,6 +241,7 @@ void handleOverviewMode() {
 
 void handleInstSeqMode() {
   drawHelpers();
+  drawPianoRoll();
   drawCursor(currentStep);
 
   for (int column = 0; column < GRIDSTEPS; column++) {
@@ -248,8 +249,8 @@ void handleInstSeqMode() {
     currentInstCol[0] = trackColors[currentInst][0];
     currentInstCol[1] = trackColors[currentInst][1];
     currentInstCol[2] = trackColors[currentInst][2];
-
-    drawStepState(currentSeq, currentInst, column + viewOffset);
+    
+    drawStepState(currentSeq, currentInst, column);
     for (int row = 0; row < GRIDROWS; row++) {
       if (buttStates2D[column][row] == true) {
         crossHair(column, row);

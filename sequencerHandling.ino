@@ -175,12 +175,13 @@ bool getNote(byte sequence, byte instrument, byte step, byte note) {
   return (thisStep & (1UL << note)) != 0;  // Check if the specific bit is set and return the result
 }
 
+// inverted drawing Y axis
 void drawStepState(uint8_t sequence, uint8_t instrument, uint8_t step) {
   uint32_t thisStep = seqMatrix[sequence][instrument][step];
   for (uint8_t i = 0; i < 8; i++) {      // iterate over 8 of the 32 potential bits in the uint32_t
     bool thisBit = (thisStep >> i + viewOffset) & 1;  // check if the i-th bit is set
     if (thisBit) {
-      setPixelXY(step, i, currentInstCol[0], currentInstCol[1], currentInstCol[2]);  // assume i is the Y-coordinate here
+      setPixelXY(step,(GRIDROWS-1) - i, currentInstCol[0], currentInstCol[1], currentInstCol[2]);  // assume i is the Y-coordinate here
     } else {
     }
   }
@@ -215,10 +216,10 @@ void clearNote(uint8_t sequence, uint8_t instrument, uint8_t step, uint8_t note)
   seqMatrix[sequence][instrument][step] &= bitmask;  // Clear the bit in the seqMatrix for the specified sequence, instrument, and step
 }
 
-void clearCurrentGrid() {
+void clearTrack(byte trackToClear) {
   for (byte j = 0; j < INSTRUMENTS; j++) {
     for (byte i = 0; i < GRIDSTEPS; i++) {
-      seqMatrix[currentSeq][j][i] = 0;
+      seqMatrix[trackToClear][j][i] = 0;
     }
   }
 }
@@ -242,24 +243,25 @@ struct TimedNote {
   byte note;
   unsigned long startTime;
   unsigned long duration;
+  byte channel;
 };
 
 const int maxTimedNotes = 10;
 TimedNote timedNotes[maxTimedNotes];
 int currentTimedNote = 0;
 
-void addTimedNote(byte note, unsigned long duration) {
+void addTimedNote(byte note, unsigned long duration, byte midiChannel) {
   timedNotes[currentTimedNote].note = note;
   timedNotes[currentTimedNote].startTime = millis();
   timedNotes[currentTimedNote].duration = duration;
-
+  timedNotes[currentTimedNote].channel = midiChannel;
   currentTimedNote = (currentTimedNote + 1) % maxTimedNotes;  // Circular buffer
 }
 
 void checkAndHandleTimedNotes() {
   for (int i = 0; i < maxTimedNotes; i++) {
     if (timedNotes[i].note != 0 && (millis() - timedNotes[i].startTime) > timedNotes[i].duration) {
-      MIDI.sendNoteOff(timedNotes[i].note, 127, 1);
+      MIDI.sendNoteOff(timedNotes[i].note, 127, timedNotes[i].channel);
       timedNotes[i].note = 0;  // Reset the note to indicate it's handled
     }
   }
@@ -272,21 +274,35 @@ void handleStep(byte stepToHandle) {
   testBool = !testBool;
   if(testBool){
     digitalWrite(interruptPin, HIGH);
-    debugln("HIGH");
+    //debugln("HIGH");
   } else {
     digitalWrite(interruptPin, LOW);
-    debugln("LOW");
+    //debugln("LOW");
   }
   //END INTERRUPT TESTING
   
 // handle notes THIS ONLY ACTUALLY SCANS THE CURRENTLY VIEWED INSTRUMENT!!!
   byte maxNotes = 16; //our datastructure actually allows 64bit steps but microbitOrchestra currently only likes 16bit
   for(byte i = 0; i < maxNotes; i++){
-    byte actualNote = maxNotes - i;
+    //byte actualNote = maxNotes - i;
+    byte actualNote = i;
     if(getNote(currentSeq, currentInst, currentStep, i)){ //we found a note
-      triggerMidiNote(actualNote,currentInst);
-      if(i>=viewOffset && i<viewOffset + 7){ // if the triggered note is within the view
-        addSparkle(currentStep, i-viewOffset,500); // make that pixel sparkle for 500ms
+      //debug("triggering note ");
+      //debug(actualNote);
+      //debug(" on channel");
+      //debugln(currentInst);
+
+      triggerMidiNote(actualNote,currentInst+1); //add one because midichannels start with 1
+      debug("viewOffset = ");
+      debug(viewOffset);
+      debug("  i = ");
+      debugln(i);
+      if(i>=viewOffset && i<=viewOffset + 7){ // if the triggered note is within the view
+        addSparkle(currentStep, (GRIDROWS-1) - (i-viewOffset),500); // make that pixel sparkle for 500ms, also invert Y axis 
+        debug("added a sparkle at step ");
+        debug(currentStep);
+        debug("   row ");
+        debugln((GRIDROWS-1) - (i-viewOffset));
       }
     }
   }
@@ -295,7 +311,7 @@ void handleStep(byte stepToHandle) {
 void triggerMidiNote(byte noteToSend, byte channelToSend){
   byte midiNote = noteToSend + 60;
   MIDI.sendNoteOn(midiNote, 127, channelToSend);
-  addTimedNote(midiNote, 50);  // Assuming 50ms is the duration for each note
+  addTimedNote(midiNote, 50, channelToSend);  // Assuming 50ms is the duration for each note
 }
 
 const int maxSize = 10;  // Maximum size of the stack
