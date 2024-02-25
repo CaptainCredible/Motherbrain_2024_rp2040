@@ -85,6 +85,21 @@ void randomize(byte whotSeq, byte whotInst) {
   }
 }
 
+
+//TOTAL 4096 bytes of EEPROM.
+//32 bits per step per instrument
+//32bits * 16steps * 8 instruments = 4096 bits (not bytes)
+//that means 4bytes per step per instrument
+//4bytes * 16steps * 8 instruments = 512bytes per page (a.k.a. sequence)
+//this times 4 pages = 2048
+//bump it up to 64bits = 8bytes * 16steps * 8 instruments = 1024bytes per page (a.k.a. sequence) * 4 pages = 4096, this means no room for flags. just read EEPROM anyway? 
+// WE NEED BIGGER STORAGE FOR 64 notes / bits per step!
+// if we go all the way up to 128, we need 16bytes * 16 steps * 8 instruments = 2048 per page, * 4 pages = 8192. i would also like to set some flags and other settings so i guess 16kB
+// if i was to rewrite to describe individual 7bit notes i would get (128/7 = 18 note polyphony per step per inst...) hmm. or 9 note polyphony if i use 64bits pet step.
+// or i could use 2 bytes per step to describe step number and end and then only store the notes i need, giving me an average of like 6-7 notes per step ? doesnt quite align with bytes so it would get complicated
+
+
+
 void saveCurrentSequenceToEEPROM(int slot) {
   if (slot >= 0 && slot < 4) {
     uint32_t address = slot * (SEQUENCE_SIZE + 1);  // +1 for the flag
@@ -106,9 +121,11 @@ void saveCurrentSequenceToEEPROM(int slot) {
   }
 }
 
-void recallSequenceFromEEPROM(int slot) {
-  if (slot >= 0 && slot < 4) {
+void recallSequenceFromEEPROM(int slot) { //LOAD ALL TRACKS
+  if (slot >= 0 && slot < 4) { // make sure we arent trying to load outtside of memory
+    
     uint32_t address = slot * (SEQUENCE_SIZE + 1);  // +1 for the flag
+    //seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS]
     if (EEPROM.read(address) == SEQUENCE_FLAG) {    // Check the flag
       address++;
       for (int i = 0; i < 8; i++) {

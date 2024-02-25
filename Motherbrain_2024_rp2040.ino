@@ -1,5 +1,8 @@
 //Currently working on getting the interrupt pin to work, test code in handle step in sequencerHandling file. test pin with LED or multimeter.
 
+//list of things tha neefd to change for 64bit version:
+
+
 #define DEBUG_ENABLED true
 
 #if DEBUG_ENABLED
@@ -24,14 +27,14 @@
 
 //trackColours:
 byte trackColors[8][3] = {
-  {255, 0, 0},      // Red
-  {255, 100, 0},    // Darker Orange
-  {255, 255, 30},   // Vivid Yellow
-  {0, 128, 0},      // Green
-  {0, 255, 255},    // Cyan
-  {0, 0, 255},      // Blue
-  {75, 0, 130},     // Indigo
-  {238, 130, 238}   // Violet
+  { 255, 0, 0 },     // Red
+  { 255, 100, 0 },   // Darker Orange
+  { 255, 255, 30 },  // Vivid Yellow
+  { 0, 128, 0 },     // Green
+  { 0, 255, 255 },   // Cyan
+  { 0, 0, 255 },     // Blue
+  { 75, 0, 130 },    // Indigo
+  { 238, 130, 238 }  // Violet
 };
 
 //averaging for pot
@@ -76,11 +79,11 @@ MIDI_CREATE_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI);
 const int clkPin = 6;  // CLK pin of the encoder
 const int dtPin = 7;   // DT pin of the encoder
 const int swPin = 3;
-int rotaryMasterCounter = 0;                     // Keeps track of the encoder position
-int clkLastState = 0;                // Stores the last state of the CLK pin
+int rotaryMasterCounter = 0;  // Keeps track of the encoder position
+int clkLastState = 0;         // Stores the last state of the CLK pin
 int swLastState = 0;
-unsigned long lastClkTime = 0;  // the last time the output pin was toggled
-unsigned long clkDebounceDelay = 1;     // the debounce time; increase if the output flickers
+unsigned long lastClkTime = 0;       // the last time the output pin was toggled
+unsigned long clkDebounceDelay = 1;  // the debounce time; increase if the output flickers
 unsigned long lastSwTime = 0;
 unsigned long swDebounceTime = 5;
 int swState = 0;
@@ -134,7 +137,7 @@ byte PLAYPAUSEPIN = 10;
 volatile int rotaryVal = 0;
 byte lastEncoded = 0;
 
-#define EEPROM_SIZE 4096
+#define EEPROM_SIZE 4096  //maximum
 #define SEQUENCE_SIZE 512
 #define SEQUENCE_FLAG 123
 
@@ -142,7 +145,7 @@ void setup() {
   //wire
   Wire1.setSDA(14);
   Wire1.setSCL(15);
-  Wire1.begin(48); // do i need an argument, address??
+  Wire1.begin(48);  // do i need an argument, address??
   Wire1.onRequest(req);
   EEPROM.begin(EEPROM_SIZE);
   //init averaging:
@@ -162,9 +165,9 @@ void setup() {
   clkLastState = digitalRead(clkPin);
   swLastState = digitalRead(swPin);
 
-  pinMode(interruptPin, OUTPUT); // to interrupt microbit
+  pinMode(interruptPin, OUTPUT);  // to interrupt microbit
   digitalWrite(interruptPin, LOW);
-  
+
   attachInterrupt(digitalPinToInterrupt(clkPin), handleRotary, CHANGE);  // Attach the interrupts
   //attachInterrupt(digitalPinToInterrupt(swPin), rotaryClick, FALLING);   // Assuming the button pulls to GND when pressed (THIS TRIGGERS ALSO WHEN KNOB IS TURNED ????)
 
@@ -181,8 +184,19 @@ void setup() {
   FastLED.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);  // INITIALIZE NeoPixel strip object (REQUIRED)
   initLedGridState();
   FastLED.show();
-  delay(1000);
-  while( !TinyUSBDevice.mounted() ) delay(1);  //this means it wont finish booting if not connected to poooooter
+  //delay(1000); // needed? 
+  testSetXY(100);
+  
+  //wait for mount
+  //while( !TinyUSBDevice.mounted()) delay(1);  //this means it wont finish booting if not connected to poooooter
+  // rewrote it with timeout
+  unsigned long startTime = millis();  // Capture start time
+  while (!TinyUSBDevice.mounted()) {
+    delay(1);                           // Wait for 1 millisecond
+    if (millis() - startTime > 1000) {  // Check if 1000ms have passed
+      break;                            // Exit the loop if more than 1000ms have passed
+    }
+  }
   testSetXY(255);
 }
 
@@ -191,7 +205,7 @@ byte mode = overviewMode;
 void loop() {
   //handleRotary(); //handled by interrupt
   handleRotaryPush();
-  if(tempo != oldTempo){
+  if (tempo != oldTempo) {
     tempoMillis = tempoToMillis(tempo);
     numberToDisplay = tempo;
     textDisplayStartTime = millis();
@@ -217,9 +231,9 @@ void loop() {
   }
   updateSparkles();
   if (millis() < textDisplayStartTime + textDisplayTimeout) {
-    displayNumber(numberToDisplay,4,3);
+    displayNumber(numberToDisplay, 4, 3);
   }
-  checkStepTimer();  // will also draw cursor
+  checkStepTimer();            // will also draw cursor
   checkAndHandleTimedNotes();  // Continually check and handle timed notes in the background
   FastLED.show();
 }
@@ -249,7 +263,7 @@ void handleInstSeqMode() {
     currentInstCol[0] = trackColors[currentInst][0];
     currentInstCol[1] = trackColors[currentInst][1];
     currentInstCol[2] = trackColors[currentInst][2];
-    
+
     drawStepState(currentSeq, currentInst, column);
     for (int row = 0; row < GRIDROWS; row++) {
       if (buttStates2D[column][row] == true) {
@@ -274,7 +288,7 @@ void checkStepTimer() {
 }
 
 
-template <typename T>
+template<typename T>
 T setBit(T input, byte bit, bool state) {
   // Calculate the number of bits in the input type
   int numBits = sizeof(T) * 8;
@@ -293,7 +307,7 @@ T setBit(T input, byte bit, bool state) {
 }
 
 //template for toggling bit in arbitrary sized int
-template <typename T>
+template<typename T>
 T toggleBit(T input, byte bit) {
   // Calculate the number of bits in the input type
   int numBits = sizeof(T) * 8;
@@ -306,7 +320,7 @@ T toggleBit(T input, byte bit) {
 }
 
 // Template function for reading a bit from an arbitrary-sized integer
-template <typename T>
+template<typename T>
 bool readBit(T input, byte bit) {
   // Calculate the number of bits in the input type
   int numBits = sizeof(T) * 8;
@@ -319,10 +333,10 @@ bool readBit(T input, byte bit) {
   }
 }
 
-void toggleMute(byte trackNumber){
+void toggleMute(byte trackNumber) {
   mutes = toggleBit(mutes, trackNumber);
 }
 
-void toggleSolo(byte trackNumber){
+void toggleSolo(byte trackNumber) {
   solos = toggleBit(solos, trackNumber);
 }

@@ -53,7 +53,7 @@ void instSeqModeButts(byte x, byte y) {
     debugln(y);
     if (x == 8 && y == 7) {
       clearTrack(currentSeq);
-    } else if (x == 12 && (y > 3 && y < 8)) {
+    } else if (x == 12 && (y > 3 && y < 8)) { //SAVE
       byte slotToSaveTo = y - 4;
       debug("save sequence ");
       debugln(slotToSaveTo);
