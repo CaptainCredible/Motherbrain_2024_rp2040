@@ -44,6 +44,7 @@ void handleButtRelease(byte x, byte y) {  //also handles buttrelease
   //MIDI.sendNoteOff(noteNumber, 0, 1);
 }
 
+#define ALLTRACKS 8
 //INVERTS THE Y VALUE
 void instSeqModeButts(byte x, byte y) {
   if (shiftState) {
@@ -51,42 +52,72 @@ void instSeqModeButts(byte x, byte y) {
     debug(x);
     debug("  y = ");
     debugln(y);
-    if (x == 8 && y == 7) {
-      clearTrack(currentSeq);
-    } else if (x == 12 && (y > 3 && y < 8)) { //SAVE
-      byte slotToSaveTo = y - 4;
-      debug("save sequence ");
-      debugln(slotToSaveTo);
-      saveCurrentSequenceToEEPROM(slotToSaveTo);
-    } else if (x == 13 && (y > 3 && y < 8)) {
-      byte slotToLoadFrom = y - 4;
-      debug("load sequence ");
-      debugln(slotToLoadFrom);
-      recallSequenceFromEEPROM(slotToLoadFrom);
-    } else if (x == 12 && y < 4) {
-      byte slotToSaveTo = y;
-      debug("save this instrument to slot ");
-      debugln(slotToSaveTo);
-      saveCurrentInstrumentToEEPROM(slotToSaveTo);
-    } else if (x == 13 && y < 4) {
-      byte slotToLoadFrom = y;
-      debug("load this instrument from slot ");
-      debugln(slotToLoadFrom);
-      loadCurrentInstrumentFromEEPROM(slotToLoadFrom);
-    } else if (x == 1 && y == 1) {
-      debugln("okidoke");
-      digitalWrite(interruptPin, HIGH);  // ask to be asked for i2c
-    } else if (y == 0 && x < 8) {         //one of the first 8 butts on top left
-      debugln("ping");
-      if (y == 0) {      // if top row page select buttons
-        currentSeq = x;  // Seq 1 2 3 or 4
-        numberToDisplay = x + 1;
-        textDisplayStartTime = millis();
-      }
-      displayNumber(x, 4, 3);
+
+    switch (x) {
+      case 0:
+      case 1:
+      case 2:
+      case 3:
+        //SAVE
+        if (y == 0) { //top row sequence (page) select buttons
+          currentSeq = x;  // Seq 1 2 3 or 4
+          numberToDisplay = x + 1;
+          textDisplayStartTime = millis();
+          displayNumber(x, 4, 3);
+        } else if (y == 7) { //bottom row save buttons
+          byte slotToSaveTo = x;
+          //debug("save instrument to slot ");
+          //debugln(slotToSaveTo);
+          saveCurrentSequenceToEEPROM(slotToSaveTo, currentInst);
+        }
+        break;
+
+      case 4:
+      case 5:
+      case 6:
+      case 7:
+        {
+          //LOAD
+          byte slotToLoadFrom = x - 4;  //change x numbers 4,5,6,7 to slot numbers 0,1,2,3
+          if (!utilState) {
+            //debug("load this instrument from slot ");
+            recallSequenceFromEEPROM(slotToLoadFrom, currentInst);
+          } else {
+            //debug("load all instruments from slot ");
+            recallSequenceFromEEPROM(slotToLoadFrom, ALLTRACKS);
+          }
+          //debugln(slotToLoadFrom);
+          break;
+        }
+
+      case 8:  //clear
+        if (y == 7) {
+          clearTrack(currentSeq);
+        }
+        break;
+
+      case 9:  //randomize
+        randomize(currentSeq, currentInst);
+        break;
+
+      case 10:
+        break;
+
+      case 11:  // nuke
+        break;
+
+      case 12:
+        break;
+
+      case 13:  //solo
+        break;
+
+      case 14:  //mute
+        break;
+
+      case 15:  //sel
+        break;
     }
-
-
   } else {  // if shift is not held in
     byte invertedY = (GRIDROWS - 1) - y;
     byte invertedOffsetY = invertedY + viewOffset;
@@ -104,7 +135,8 @@ void instSeqModeButts(byte x, byte y) {
 
 void overviewModeButts(byte x, byte y) {
   byte loadSelect = 0;  // Initialize the variables outside the switch
-  byte saveSelect = 0;
+  byte saveSlotSelect = 0;
+  byte trackSelect = 0;
   if (shiftState) {
     switch (x) {
       case 9:
@@ -122,15 +154,24 @@ void overviewModeButts(byte x, byte y) {
         loadSelect = x - 4;  // Assign values within the cases
         debug("load number ");
         debugln(loadSelect);
-
+        if (!utilState) {
+          recallSequenceFromEEPROM(loadSelect, y);
+        } else {
+          recallSequenceFromEEPROM(loadSelect, ALLTRACKS);
+        }
         break;
       case 3:
       case 2:
       case 1:
       case 0:
-        saveSelect = x;  // Assign values within the cases
+        saveSlotSelect = x;  // Assign values within the cases
+        trackSelect = y;
+        if(utilState){
+          trackSelect = 8;
+        }
         debug("save number ");
-        debugln(saveSelect);
+        debugln(saveSlotSelect);
+        saveCurrentSequenceToEEPROM(saveSlotSelect, trackSelect); //save instrument "y" to slot "x" (saveselect)
         break;
       default:
         // Handle other cases when shift is true
@@ -260,7 +301,7 @@ void scanButtsNKnobs() {
   if (playButtonState != oldPlayButtonState) {
     if (playButtonState) {  // when button goes from off to on
       playing = !playing;
-      if(!playing){
+      if (!playing) {
         currentStep = -1;
       } else if (playing) {
         lastStepTime = millis();

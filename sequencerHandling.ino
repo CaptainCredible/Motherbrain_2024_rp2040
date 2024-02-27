@@ -92,7 +92,7 @@ void randomize(byte whotSeq, byte whotInst) {
 //that means 4bytes per step per instrument
 //4bytes * 16steps * 8 instruments = 512bytes per page (a.k.a. sequence)
 //this times 4 pages = 2048
-//bump it up to 64bits = 8bytes * 16steps * 8 instruments = 1024bytes per page (a.k.a. sequence) * 4 pages = 4096, this means no room for flags. just read EEPROM anyway? 
+//bump it up to 64bits = 8bytes * 16steps * 8 instruments = 1024bytes per page (a.k.a. sequence) * 4 pages = 4096, this means no room for flags. just read EEPROM anyway?
 // WE NEED BIGGER STORAGE FOR 64 notes / bits per step!
 // if we go all the way up to 128, we need 16bytes * 16 steps * 8 instruments = 2048 per page, * 4 pages = 8192. i would also like to set some flags and other settings so i guess 16kB
 // if i was to rewrite to describe individual 7bit notes i would get (128/7 = 18 note polyphony per step per inst...) hmm. or 9 note polyphony if i use 64bits pet step.
@@ -100,45 +100,62 @@ void randomize(byte whotSeq, byte whotInst) {
 
 
 
-void saveCurrentSequenceToEEPROM(int slot) {
+void saveCurrentSequenceToEEPROM(int slot, int trackToSave) {  // 8 saves all tracks
   if (slot >= 0 && slot < 4) {
     uint32_t address = slot * (SEQUENCE_SIZE + 1);  // +1 for the flag
     EEPROM.write(address, SEQUENCE_FLAG);           // Write the flag
     address++;
     for (int i = 0; i < 8; i++) {
       for (int j = 0; j < 16; j++) {
-        EEPROM.put(address, seqMatrix[currentSeq][i][j]);
+        if (trackToSave == i || trackToSave == ALLTRACKS) {
+          EEPROM.put(address, seqMatrix[currentSeq][i][j]);
+        }
         address += sizeof(uint32_t);
-        debug("wrote address ");
-        debugln(address);
       }
     }
     EEPROM.commit();
-    debugln("done");
+    debug("saved instrument ");
+    if(trackToSave == ALLTRACKS){
+      debug("ALL TRACKS");
+    } else {
+      debug(trackToSave);
+    }
+    debug(" to slot ");
+    debugln(slot);
   } else {
     // Handle error: Invalid slot number
     debugln("invalid slot number");
   }
 }
 
-void recallSequenceFromEEPROM(int slot) { //LOAD ALL TRACKS
-  if (slot >= 0 && slot < 4) { // make sure we arent trying to load outtside of memory
-    
-    uint32_t address = slot * (SEQUENCE_SIZE + 1);  // +1 for the flag
+void recallSequenceFromEEPROM(int slot, int trackToLoad) {  // 8 LOADS ALL TRACKS
+  if (slot >= 0 && slot < 4) {                              // make sure we arent trying to load outtside of memory
+    uint32_t address = slot * (SEQUENCE_SIZE + 1);          // +1 for the flag
     //seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS]
-    if (EEPROM.read(address) == SEQUENCE_FLAG) {    // Check the flag
+    //if (EEPROM.read(address) == SEQUENCE_FLAG) {  // Check the flag
+    if(true){ // ignore the flag
       address++;
-      for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 16; j++) {
+      for (int i = 0; i < 8; i++) {     //tracks
+        for (int j = 0; j < 16; j++) {  //steps
           uint32_t value;
-          EEPROM.get(address, value);
-          seqMatrix[currentSeq][i][j] = value;
+          if (trackToLoad == i || trackToLoad == ALLTRACKS) {
+            EEPROM.get(address, value);
+            seqMatrix[currentSeq][i][j] = value;
+          }
+
           address += sizeof(uint32_t);
-          debug("recalled address ");
-          debugln(address);
+          //debug("recalled address ");
+          //debugln(address);
         }
       }
-      debugln("done");
+      debug("loaded instrument ");
+      if(trackToLoad == 8){
+      debug("ALL TRACKS");  
+      } else {
+        debug(trackToLoad);
+      }
+      debug(" from slot ");
+      debugln(slot);
     } else {
       debugln("wrong flag");
       // Handle error: Invalid sequence flag, sequence not stored
@@ -149,18 +166,23 @@ void recallSequenceFromEEPROM(int slot) { //LOAD ALL TRACKS
   }
 }
 
+
+/*
 // Save the current instrument to a slot
-void saveCurrentInstrumentToEEPROM(int slot) {
+void saveSingleInstrumentToEEPROM(int slot, int instrumentToSave) {
   if (slot >= 0 && slot < 4) {
     uint32_t address = slot * (SEQUENCE_SIZE + 1) + 1;  // Start of the sequence data (after the flag)
     address += currentInst * 16 * sizeof(uint32_t);     // Offset to the current instrument
 
     for (int j = 0; j < 16; j++) {
-      EEPROM.put(address, seqMatrix[currentSeq][currentInst][j]);
+      EEPROM.put(address, seqMatrix[currentSeq][instrumentToSave][j]);
       address += sizeof(uint32_t);
     }
-
     EEPROM.commit();
+    debug("saved instrument ");
+    debug(instrumentToSave);
+    debug(" to slot ");
+    debugln(slot);
   } else {
     // Handle error: Invalid slot number
   }
@@ -182,7 +204,7 @@ void loadCurrentInstrumentFromEEPROM(int slot) {
     // Handle error: Invalid slot number
   }
 }
-
+*/
 
 
 // to begin with, just read seqMatrix[0][0][0-15]
@@ -309,7 +331,7 @@ void handleStep(byte stepToHandle) {
     bool alreadyTriggeredSparkleForThisTrack = false;
     for (byte i = 0; i < maxNotes; i++) {
       byte actualNote = i;
-      if(getNote(currentSeq, currentTrack, currentStep, i)) {  //we found a note
+      if (getNote(currentSeq, currentTrack, currentStep, i)) {  //we found a note
         triggerMidiNote(actualNote, currentTrack + 1);          //add one because midichannels start with 1
         //need added logic here to only make sparkles fot the track we are viewing
         if (mode == overviewMode) {
@@ -317,11 +339,11 @@ void handleStep(byte stepToHandle) {
             currentInstCol[0] = trackColors[currentTrack][0];
             currentInstCol[1] = trackColors[currentTrack][1];
             currentInstCol[2] = trackColors[currentTrack][2];
-            addSparkle(currentStep, currentTrack, currentInstCol[0],currentInstCol[1],currentInstCol[2], 500);
+            addSparkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], 500);
           }
         } else {
-          if ((i >= viewOffset && i <= viewOffset + 7) && (currentTrack == currentInst)) {  // if the triggered note is within the view and we are viewing the track that is playing the note
-            addSparkle(currentStep, (GRIDROWS - 1) - (i - viewOffset),currentInstCol[0],currentInstCol[1],currentInstCol[2], 500);                // make that pixel sparkle for 500ms, also invert Y axis
+          if ((i >= viewOffset && i <= viewOffset + 7) && (currentTrack == currentInst)) {                                             // if the triggered note is within the view and we are viewing the track that is playing the note
+            addSparkle(currentStep, (GRIDROWS - 1) - (i - viewOffset), currentInstCol[0], currentInstCol[1], currentInstCol[2], 500);  // make that pixel sparkle for 500ms, also invert Y axis
           }
         }
       }
