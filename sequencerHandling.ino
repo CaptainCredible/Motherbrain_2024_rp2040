@@ -115,7 +115,7 @@ void saveCurrentSequenceToEEPROM(int slot, int trackToSave) {  // 8 saves all tr
     }
     EEPROM.commit();
     debug("saved instrument ");
-    if(trackToSave == ALLTRACKS){
+    if (trackToSave == ALLTRACKS) {
       debug("ALL TRACKS");
     } else {
       debug(trackToSave);
@@ -133,7 +133,7 @@ void recallSequenceFromEEPROM(int slot, int trackToLoad) {  // 8 LOADS ALL TRACK
     uint32_t address = slot * (SEQUENCE_SIZE + 1);          // +1 for the flag
     //seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS]
     //if (EEPROM.read(address) == SEQUENCE_FLAG) {  // Check the flag
-    if(true){ // ignore the flag
+    if (true) {  // ignore the flag
       address++;
       for (int i = 0; i < 8; i++) {     //tracks
         for (int j = 0; j < 16; j++) {  //steps
@@ -149,8 +149,8 @@ void recallSequenceFromEEPROM(int slot, int trackToLoad) {  // 8 LOADS ALL TRACK
         }
       }
       debug("loaded instrument ");
-      if(trackToLoad == 8){
-      debug("ALL TRACKS");  
+      if (trackToLoad == 8) {
+        debug("ALL TRACKS");
       } else {
         debug(trackToLoad);
       }
@@ -255,15 +255,29 @@ void clearNote(uint8_t sequence, uint8_t instrument, uint8_t step, uint8_t note)
   seqMatrix[sequence][instrument][step] &= bitmask;  // Clear the bit in the seqMatrix for the specified sequence, instrument, and step
 }
 
-void clearTrack(byte trackToClear) {
-  for (byte j = 0; j < INSTRUMENTS; j++) {
+void clearTrack(byte sequenceToClear, byte trackToClear) {
+  if (trackToClear == ALLTRACKS) {
+    for (byte j = 0; j < INSTRUMENTS; j++) {
+      for (byte i = 0; i < GRIDSTEPS; i++) {
+        seqMatrix[sequenceToClear][j][i] = 0;
+      }
+    }
+  } else {
+
     for (byte i = 0; i < GRIDSTEPS; i++) {
-      seqMatrix[trackToClear][j][i] = 0;
+      seqMatrix[sequenceToClear][trackToClear][i] = 0;
     }
   }
 }
 
 void clearInst(byte whotSeq, byte whotInst) {
+  if (whotInst == ALLTRACKS) {
+    for (byte i = 0; i < 8; i++) {
+      for (byte j = 0; j < GRIDSTEPS; j++) {
+        seqMatrix[whotSeq][i][j] = 0;
+      }
+    }
+  }
   for (byte i = 0; i < GRIDSTEPS; i++) {
     seqMatrix[whotSeq][whotInst][i] = 0;
   }
@@ -310,19 +324,34 @@ void checkAndHandleTimedNotes() {
   }
 }
 
-bool testBool = false;
-void handleStep(byte stepToHandle) {
 
-  //INTERRUPT TESTING !!!
-  testBool = !testBool;
-  if (testBool) {
+
+// INTERRUPT uBit //
+
+unsigned long i2cTimeout = 0;
+byte i2cTimeoutDuration = 20;
+bool isTimedOut = false;
+void handleI2CTimeout() {
+  if (millis() - i2cTimeout > i2cTimeoutDuration && isTimedOut == false) {
     digitalWrite(interruptPin, HIGH);
-    //debugln("HIGH");
-  } else {
-    digitalWrite(interruptPin, LOW);
-    //debugln("LOW");
+    i2cTimeout == millis();
+    debugln("i2c timeout");
+    isTimedOut = true;
   }
-  //END INTERRUPT TESTING
+}
+
+void tellUbitToAskForData(){
+  digitalWrite(interruptPin, LOW);
+    i2cTimeout = millis();
+    isTimedOut = false;
+    debugln("interruptUbit");
+}
+
+
+// HANDLE STEP //
+
+void handleStep(byte stepToHandle) {
+  tellUbitToAskForData();
 
   // handle notes THIS ONLY ACTUALLY SCANS THE CURRENTLY VIEWED INSTRUMENT!!!
   byte maxNotes = 16;  //our datastructure actually allows 64bit steps but microbitOrchestra currently only likes 16bit

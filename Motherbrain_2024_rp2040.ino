@@ -22,7 +22,7 @@
 
 #define overviewMode 0
 #define instSeqMode 1
-
+#define ALLTRACKS 8
 
 
 //trackColours:
@@ -198,6 +198,7 @@ void setup() {
     }
   }
   testSetXY(255);
+  recallSequenceFromEEPROM(0, ALLTRACKS);
 }
 
 
@@ -211,13 +212,6 @@ void loop() {
     textDisplayStartTime = millis();
     oldTempo = tempo;
   }
-  /*
-  if (utilState) {
-    mode = overviewMode;
-  } else {
-    mode = instSeqMode;
-  }
-  */
   scanGrid();  //scan the grid
   scanButtsNKnobs();
   FastLED.clear();
@@ -235,6 +229,7 @@ void loop() {
   }
   checkStepTimer();            // will also draw cursor
   checkAndHandleTimedNotes();  // Continually check and handle timed notes in the background
+  handleI2CTimeout();
   FastLED.show();
 }
 

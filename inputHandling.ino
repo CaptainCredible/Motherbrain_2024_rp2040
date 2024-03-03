@@ -44,7 +44,7 @@ void handleButtRelease(byte x, byte y) {  //also handles buttrelease
   //MIDI.sendNoteOff(noteNumber, 0, 1);
 }
 
-#define ALLTRACKS 8
+
 //INVERTS THE Y VALUE
 void instSeqModeButts(byte x, byte y) {
   if (shiftState) {
@@ -92,7 +92,7 @@ void instSeqModeButts(byte x, byte y) {
 
       case 8:  //clear
         if (y == 7) {
-          clearTrack(currentSeq);
+          clearTrack(currentSeq, currentInst);
         }
         break;
 
@@ -136,7 +136,7 @@ void instSeqModeButts(byte x, byte y) {
 void overviewModeButts(byte x, byte y) {
   byte loadSelect = 0;  // Initialize the variables outside the switch
   byte saveSlotSelect = 0;
-  byte trackSelect = 0;
+  byte trackSelect = 0 ;
   if (shiftState) {
     switch (x) {
       case 9:
@@ -145,7 +145,12 @@ void overviewModeButts(byte x, byte y) {
         debugln(y);
         break;
       case 8:  // clear
+      if(utilState){
+        if(y==7)clearInst(currentSeq,ALLTRACKS);
+      } else {
         clearInst(currentSeq, y);
+      }
+        
         break;
       case 7:
       case 6:
@@ -171,7 +176,12 @@ void overviewModeButts(byte x, byte y) {
         }
         debug("save number ");
         debugln(saveSlotSelect);
-        saveCurrentSequenceToEEPROM(saveSlotSelect, trackSelect); //save instrument "y" to slot "x" (saveselect)
+        if(utilState){
+          saveCurrentSequenceToEEPROM(saveSlotSelect, ALLTRACKS); //save instrument "y" to slot "x" (saveselect)    
+        } else {
+          saveCurrentSequenceToEEPROM(saveSlotSelect, trackSelect); //save instrument "y" to slot "x" (saveselect)
+        }
+        
         break;
       default:
         // Handle other cases when shift is true
@@ -393,8 +403,12 @@ void drawRotaryMasterCounterOverSerial() {
 }
 
 void rotaryMove(int moveAmount) {
+  if(mode == overviewMode && utilState){
+    tempo = tempo + moveAmount*10;
+  }
+
   if (shiftState) {
-    tempo = tempo + moveAmount;  // not working great...
+    tempo = tempo + moveAmount;
   } else {
     viewOffset += moveAmount;
     if (viewOffset > maxViewOffset) viewOffset = maxViewOffset;

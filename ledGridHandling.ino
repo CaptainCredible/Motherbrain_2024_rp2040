@@ -33,29 +33,36 @@ void setPixelXY(int Xcoord, int Ycoord, byte R, byte G, byte B) {
   }
 }
 
-int gridBrightness = 3;
+int gridBrightness = 6;  // shift amount
 
 void drawHelpers() {
   for (byte i = 0; i < GRIDSTEPS >> 2; i++) {
     for (byte j = 0; j < GRIDROWS; j++) {
-      softSetPixelXY(i << 2, j, gridBrightness, 0, 0);
+      //trackColors[8][3]
+      //softSetPixelXY(i << 2, j, 2, 0, 0);
+      
+      softSetPixelXY(i << 2, j, currentInstCol[0] >> gridBrightness, currentInstCol[1] >> gridBrightness, currentInstCol[2] >> gridBrightness);
     }
   }
 }
 
-void drawPianoRoll(){
-    for (int row = 0; row < GRIDROWS >> 2; row++) {
-      int rowToDraw = ((GRIDROWS-1)-(row<<2) + viewOffset)%GRIDROWS;
-      if(rowToDraw < 0){
-        rowToDraw+=GRIDROWS; // wrap around to the bottom
+//bool pianoRoll[12] = {false, true, false, true, false, false, true, false, true, false, true, false};
+bool pianoRoll[12] = {true, false, false, false, false, false, false, true, false, false, false, false};
+void drawPianoRoll() {
+  for (int row = 0; row < GRIDROWS; row++) {
+    byte invRow = 7-row;
+    int offsetRow = invRow + viewOffset;
+    //if(offsetRow<0){offsetRow = 11;}
+    if (pianoRoll[offsetRow % 12]) {
+      for (byte stp = 0; stp < GRIDSTEPS; stp++) {
+        softSetPixelXY(stp, row, currentInstCol[0] >> gridBrightness, currentInstCol[1] >> gridBrightness, currentInstCol[2] >> gridBrightness);
       }
-    for (byte stp = 0; stp < GRIDSTEPS; stp++) {
-      softSetPixelXY(stp, rowToDraw, gridBrightness, 0, 0);
     }
   }
 }
 
-void setPixelXYP(int Xcoord, int Ycoord, CHSV colour) {
+void
+setPixelXYP(int Xcoord, int Ycoord, CHSV colour) {
   if (Xcoord >= 0 && Xcoord < GRIDSTEPS) {
     if (Ycoord >= 0 && Ycoord < GRIDROWS) {  // check that X and Y are within range
       leds[pixelXY(Xcoord, Ycoord)] = colour;
