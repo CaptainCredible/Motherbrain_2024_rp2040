@@ -16,9 +16,31 @@ template <typename T> unsigned int I2C_readAnything(T& value)
 
 // code that runs on i2c request
 void req() { 
-  int valueToReturn = 3;
+  int valueToReturn = abs(currentStep %8);
   Wire1.write(valueToReturn);
-  debugln("gotRequest");
+  //debugln("gotRequest");
+}
+
+
+// INTERRUPT uBit //
+
+unsigned long i2cTimeout = 0;
+byte i2cTimeoutDuration = 20;
+bool isTimedOut = false;
+void handleI2CTimeout() {
+  if (millis() - i2cTimeout > i2cTimeoutDuration && isTimedOut == false) {
+    digitalWrite(interruptPin, HIGH);
+    i2cTimeout == millis();
+    //debugln("i2c timeout");
+    isTimedOut = true;
+  }
+}
+
+void tellUbitToAskForData(){
+  digitalWrite(interruptPin, LOW);
+    i2cTimeout = millis();
+    isTimedOut = false;
+    //debugln("interruptUbit");
 }
 
 //microbit read code

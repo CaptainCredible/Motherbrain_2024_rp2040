@@ -326,26 +326,7 @@ void checkAndHandleTimedNotes() {
 
 
 
-// INTERRUPT uBit //
 
-unsigned long i2cTimeout = 0;
-byte i2cTimeoutDuration = 20;
-bool isTimedOut = false;
-void handleI2CTimeout() {
-  if (millis() - i2cTimeout > i2cTimeoutDuration && isTimedOut == false) {
-    digitalWrite(interruptPin, HIGH);
-    i2cTimeout == millis();
-    debugln("i2c timeout");
-    isTimedOut = true;
-  }
-}
-
-void tellUbitToAskForData(){
-  digitalWrite(interruptPin, LOW);
-    i2cTimeout = millis();
-    isTimedOut = false;
-    debugln("interruptUbit");
-}
 
 
 // HANDLE STEP //
@@ -368,11 +349,11 @@ void handleStep(byte stepToHandle) {
             currentInstCol[0] = trackColors[currentTrack][0];
             currentInstCol[1] = trackColors[currentTrack][1];
             currentInstCol[2] = trackColors[currentTrack][2];
-            addSparkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], 500);
+            addSparkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);
           }
         } else {
           if ((i >= viewOffset && i <= viewOffset + 7) && (currentTrack == currentInst)) {                                             // if the triggered note is within the view and we are viewing the track that is playing the note
-            addSparkle(currentStep, (GRIDROWS - 1) - (i - viewOffset), currentInstCol[0], currentInstCol[1], currentInstCol[2], 500);  // make that pixel sparkle for 500ms, also invert Y axis
+            addSparkle(currentStep, (GRIDROWS - 1) - (i - viewOffset), currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
           }
         }
       }

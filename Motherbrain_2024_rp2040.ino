@@ -24,6 +24,7 @@
 #define instSeqMode 1
 #define ALLTRACKS 8
 
+int sparkleLifespan = 200;
 
 //trackColours:
 byte trackColors[8][3] = {
