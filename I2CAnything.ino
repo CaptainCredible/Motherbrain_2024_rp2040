@@ -16,7 +16,7 @@ template <typename T> unsigned int I2C_readAnything(T& value)
 
 // code that runs on i2c request
 void req() { 
-  int valueToReturn = 123;
+  int valueToReturn = 3;
   Wire1.write(valueToReturn);
   debugln("gotRequest");
 }
