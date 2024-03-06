@@ -283,6 +283,8 @@ void clearInst(byte whotSeq, byte whotInst) {
   }
 }
 
+//pølse
+
 
 
 void toggleNote(uint8_t sequence, uint8_t instrument, uint8_t step, uint8_t note) {
@@ -369,9 +371,25 @@ void triggerMidiNote(byte noteToSend, byte channelToSend) {
   }
 }
 
-const int maxSize = 10;  // Maximum size of the stack
+
+////??????
+const int maxSize = 10;  // Maximum size of the  stack
 int myStack[maxSize];    // Stack implemented as an array
 int top = -1;            // Initialize the top of the stack to -1 (empty)
+////??????
+
+
+
+void clearTracksBuffer() {
+	for (int i = 0; i < 16; i++) {
+		tracksBuffer16x8[i] = 0;
+	}
+}
+
+void radioSendClockTick() {
+	//sendWire2microBitTrackAndNote(101, 0);			//send that note to microbit (ask microbit to request it.
+}
+
 
 
 /*

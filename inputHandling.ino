@@ -423,31 +423,3 @@ void rotaryMove(int moveAmount) {
     tempo = 0;
   }
 }
-
-/*
-//interrupt based rotary update
-unsigned long lastRotaryUpdate = 0;
-void rotaryUpdate() {
-  if(millis()> lastRotaryUpdate + 10){
-    bool dtState = digitalRead(dtPin);
-    bool clkState = digitalRead(clkPin);
-    //if(!clkState){ // make sure we are falling
-      if (dtState) {
-        rotaryMove(-1);
-      } else {
-        rotaryMove(1);
-      }
-    //}
-    lastRotaryUpdate = millis();
-  }
-}
-
-//interrupt based click
-void rotaryClick() {
-  if(shiftState){
-    debugln("shift pop");
-  } else {
-    debugln("pop");
-  }
-}
-*/

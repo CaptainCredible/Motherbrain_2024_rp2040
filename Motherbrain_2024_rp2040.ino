@@ -23,9 +23,14 @@
 #define overviewMode 0
 #define instSeqMode 1
 #define ALLTRACKS 8
-
+bool waitingForTimeOut = false; // are we waiting for more midi notes to come in? 
 int sparkleLifespan = 200;
-
+unsigned int tracksBuffer16x8[10] = { 0,0,0,0,0,0,0,0,0,0 }; //tracks 0 - 8 then currentstep then mutes
+unsigned int midiTracksBuffer16x8[10] = { 0,0,0,0,0,0,0,0,0,0 }; //last one used for currentStep, so receivers need to be able to determine that we are not setting step number!
+uint8_t isMutedByte = 0b0000000000000000;
+bool isMuted[8] = { false, false,false, false,false, false,false, false };
+bool isPoly[8] = {true, true, true, true, true, true, true, true};
+int midiClockDiv = 6;
 //trackColours:
 byte trackColors[8][3] = {
   { 255, 0, 0 },     // Red
@@ -45,6 +50,7 @@ int readIndex = 0;           // Index of current reading
 int total = 0;               // Running total of readings
 int tempo = 120;
 int oldTempo = 0;
+unsigned long timeOutStamp = 0;
 
 // USB MIDI object
 Adafruit_USBD_MIDI usb_midi;
