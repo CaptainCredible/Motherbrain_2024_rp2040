@@ -102,6 +102,7 @@ void triggerImmediately(byte track, byte note) {
 }
 
 
+
 void sendMutes() {
 	if (!waitingForTimeOut) { // waitingfortimeout is waiting for more midi messages before sending radiomessage
 		midiTracksBuffer16x8[9] = isMutedByte;

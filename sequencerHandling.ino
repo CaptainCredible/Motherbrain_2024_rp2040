@@ -226,15 +226,21 @@ void drawStepState(uint8_t sequence, uint8_t instrument, uint8_t step) {
   }
 }
 
-int fadedAmount = 0;  // doesnt work very well
+
 void drawSeqOverview(uint8_t currentSeq) {
+  int fadedAmount = 0;  // doesnt work very well
   for (uint8_t selectInst = 0; selectInst < SEQUENCES; selectInst++) {
-    int currentRed = trackColors[selectInst][0] - fadedAmount;
-    if (currentRed < 1) currentRed = 5;
-    int currentGreen = trackColors[selectInst][1] - fadedAmount;
-    if (currentGreen < 1) currentGreen = 5;
-    int currentBlue = trackColors[selectInst][2] - fadedAmount;
-    if (currentBlue < 1) currentBlue = 5;
+    if (bitRead(mutes, selectInst)) {  // if this track is muted
+      fadedAmount = 4;
+    } else {
+      fadedAmount = 0;
+    }
+    int currentRed = trackColors[selectInst][0] >> fadedAmount;
+    if (currentRed < 5) currentRed = 5;
+    int currentGreen = trackColors[selectInst][1] >> fadedAmount;
+    if (currentGreen < 5) currentGreen = 5;
+    int currentBlue = trackColors[selectInst][2] >> fadedAmount;
+    if (currentBlue < 5) currentBlue = 5;
     for (uint8_t step = 0; step < GRIDSTEPS; step++) {
       if (seqMatrix[currentSeq][selectInst][step] > 0) {
         setPixelXY(step, selectInst, currentRed, currentGreen, currentBlue);  // assume i is the Y-coordinate here
@@ -341,20 +347,22 @@ void handleStep(byte stepToHandle) {
     bool alreadyTriggeredSparkleForThisTrack = false;
     for (byte i = 0; i < maxNotes; i++) {
       byte actualNote = i;
-      if (getNote(currentSeq, currentTrack, currentStep, i)) {  //we found a note        
-        triggerMidiNote(actualNote, currentTrack + 1);          //add one because midichannels start with 1
-        //need added logic here to only make sparkles fot the track we are viewing
-        if (mode == overviewMode) {
-          if (!alreadyTriggeredSparkleForThisTrack) {
-            currentInstCol[0] = trackColors[currentTrack][0];
-            currentInstCol[1] = trackColors[currentTrack][1];
-            currentInstCol[2] = trackColors[currentTrack][2];
-            addSparkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
-            alreadyTriggeredSparkleForThisTrack = true;
-          }
-        } else {
-          if ((i >= viewOffset && i <= viewOffset + 7) && (currentTrack == currentInst)) {                                             // if the triggered note is within the view and we are viewing the track that is playing the note
-            addSparkle(currentStep, (GRIDROWS - 1) - (i - viewOffset), currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+      if (getNote(currentSeq, currentTrack, currentStep, i)) {  //we found a note
+        if (!bitRead(mutes, currentTrack)) {                    // if this track is not muted
+          triggerMidiNote(actualNote, currentTrack + 1);        //add one because midichannels start with 1
+          //need added logic here to only make sparkles fot the track we are viewing
+          if (mode == overviewMode) {
+            if (!alreadyTriggeredSparkleForThisTrack) {
+              currentInstCol[0] = trackColors[currentTrack][0];
+              currentInstCol[1] = trackColors[currentTrack][1];
+              currentInstCol[2] = trackColors[currentTrack][2];
+              addSparkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+              alreadyTriggeredSparkleForThisTrack = true;
+            }
+          } else {
+            if ((i >= viewOffset && i <= viewOffset + 7) && (currentTrack == currentInst)) {                                                         // if the triggered note is within the view and we are viewing the track that is playing the note
+              addSparkle(currentStep, (GRIDROWS - 1) - (i - viewOffset), currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+            }
           }
         }
       }
@@ -380,13 +388,13 @@ int top = -1;            // Initialize the top of the stack to -1 (empty)
 
 
 void clearTracksBuffer() {
-	for (int i = 0; i < 16; i++) {
-		tracksBuffer16x8[i] = 0;
-	}
+  for (int i = 0; i < 16; i++) {
+    tracksBuffer16x8[i] = 0;
+  }
 }
 
 void radioSendClockTick() {
-	//sendWire2microBitTrackAndNote(101, 0);			//send that note to microbit (ask microbit to request it.
+  //sendWire2microBitTrackAndNote(101, 0);			//send that note to microbit (ask microbit to request it.
 }
 
 

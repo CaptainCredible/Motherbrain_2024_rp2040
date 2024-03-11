@@ -1,8 +1,8 @@
 /*TODO:
   DONE make internal clock only work when its been a while since midi clock
   
-  mute button
-  solo button
+  DONE mute button
+  solo button is maybe dumb...?
 
   set up load save buttons correctly (shift + slot for load, shift + save + slot for save)
   sequencer to i2c
@@ -53,7 +53,7 @@ byte trackColors[8][3] = {
   { 0, 0, 255 },     // Blue
   { 75, 0, 130 },    // Indigo
   //{ 238, 130, 238 }  // Violet
-  { 118, 60, 118 }  // Violet
+  { 118, 60, 60 }  // Violet faded
 };
 
 //averaging for pot
@@ -384,5 +384,14 @@ void toggleMute(byte trackNumber) {
 }
 
 void toggleSolo(byte trackNumber) {
-  solos = toggleBit(solos, trackNumber);
+  debug("SOLOED ");
+  debugln(trackNumber);
+  for(byte i = 0; i < 8; i++ ){
+    if(i == trackNumber){
+      mutes = setBit(mutes, i, false);
+    } else {
+      mutes = setBit(mutes, i, true);
+    }
+  }
+  Serial.println(mutes, BIN);
 }

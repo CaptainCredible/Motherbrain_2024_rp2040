@@ -195,8 +195,13 @@ void overviewModeButts(byte x, byte y) {
         break;
       case 14:  // mute column
         toggleMute(y);
-        debug("muted ");
+        if(bitRead(mutes, y)){
+          debug("muted ");
+        } else {
+          debug("unmuted ");
+        }
         debugln(y);
+        Serial.println(mutes, BIN);
         break;
       case 13:  // solo column
         toggleSolo(y);
