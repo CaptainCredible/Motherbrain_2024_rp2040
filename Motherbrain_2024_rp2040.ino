@@ -30,7 +30,7 @@ unsigned int midiTracksBuffer16x8[10] = { 0,0,0,0,0,0,0,0,0,0 }; //last one used
 uint8_t isMutedByte = 0b0000000000000000;
 bool isMuted[8] = { false, false,false, false,false, false,false, false };
 bool isPoly[8] = {true, true, true, true, true, true, true, true};
-int midiClockDiv = 6;
+
 //trackColours:
 byte trackColors[8][3] = {
   { 255, 0, 0 },     // Red
@@ -40,7 +40,8 @@ byte trackColors[8][3] = {
   { 0, 255, 255 },   // Cyan
   { 0, 0, 255 },     // Blue
   { 75, 0, 130 },    // Indigo
-  { 238, 130, 238 }  // Violet
+  //{ 238, 130, 238 }  // Violet
+  { 118, 60, 118 }  // Violet
 };
 
 //averaging for pot
@@ -184,7 +185,8 @@ void setup() {
   TinyUSB_Device_Init(0);
 #endif
   MIDI.begin(MIDI_CHANNEL_OMNI);
-
+  MIDI.setHandleClock(handleUsbMidiClockTicks);
+  MIDI.setHandleNoteOn(handleNoteOn);  // Put only the name of the function
   //GRID
   setupGridPins();  //setup pins for buttonGrid
   //pixels.begin();   // INITIALIZE NeoPixel strip object (REQUIRED)
@@ -207,7 +209,33 @@ void setup() {
   testSetXY(255);
   recallSequenceFromEEPROM(0, ALLTRACKS);
 }
+bool runClock = true; //run internal clock
+bool midiClockRunning = false;
+unsigned long lastMidiClockReceivedTime = 100000; //how long since last time we received a midi clock
+int midiClockDiv = 6;
+byte midiClockCounter = 5;
 
+
+void handleUsbMidiClockTicks() {
+	runClock = false;
+	lastMidiClockReceivedTime = millis();
+	midiClockRunning = true;
+	midiClockCounter++;
+	midiClockCounter = midiClockCounter % midiClockDiv;
+	if (midiClockCounter == 0) {
+		midiClockStep();
+	}
+}
+
+void handleNoteOn(byte channel, byte pitch, byte velocity){
+  debugln("note");
+}
+
+void midiClockStep(){
+ //debugln(midiClockCounter);
+ currentStep++;
+ handleStep();  // this isn't doing anything
+}
 
 byte mode = overviewMode;
 void loop() {
@@ -238,6 +266,7 @@ void loop() {
   checkAndHandleTimedNotes();  // Continually check and handle timed notes in the background
   handleI2CTimeout();
   FastLED.show();
+  MIDI.read();
 }
 
 unsigned long lastStepTime = 0;

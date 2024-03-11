@@ -335,15 +335,13 @@ void checkAndHandleTimedNotes() {
 
 void handleStep(byte stepToHandle) {
   tellUbitToAskForData();
-
   // handle notes THIS ONLY ACTUALLY SCANS THE CURRENTLY VIEWED INSTRUMENT!!!
   byte maxNotes = 16;  //our datastructure actually allows 64bit steps but microbitOrchestra currently only likes 16bit
-
   for (byte currentTrack = 0; currentTrack < 8; currentTrack++) {
     bool alreadyTriggeredSparkleForThisTrack = false;
     for (byte i = 0; i < maxNotes; i++) {
       byte actualNote = i;
-      if (getNote(currentSeq, currentTrack, currentStep, i)) {  //we found a note
+      if (getNote(currentSeq, currentTrack, currentStep, i)) {  //we found a note        
         triggerMidiNote(actualNote, currentTrack + 1);          //add one because midichannels start with 1
         //need added logic here to only make sparkles fot the track we are viewing
         if (mode == overviewMode) {
@@ -351,7 +349,8 @@ void handleStep(byte stepToHandle) {
             currentInstCol[0] = trackColors[currentTrack][0];
             currentInstCol[1] = trackColors[currentTrack][1];
             currentInstCol[2] = trackColors[currentTrack][2];
-            addSparkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);
+            addSparkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+            alreadyTriggeredSparkleForThisTrack = true;
           }
         } else {
           if ((i >= viewOffset && i <= viewOffset + 7) && (currentTrack == currentInst)) {                                             // if the triggered note is within the view and we are viewing the track that is playing the note

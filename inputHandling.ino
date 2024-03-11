@@ -409,12 +409,13 @@ void rotaryMove(int moveAmount) {
 
   if (shiftState) {
     tempo = tempo + moveAmount;
+    debug("tempo ");
+    debugln(tempo);
   } else {
     viewOffset += moveAmount;
     if (viewOffset > maxViewOffset) viewOffset = maxViewOffset;
     if (viewOffset < 0) viewOffset = 0;
-    //debug("viewOffset = ");
-    //debugln(viewOffset);
+
   }
 
   if (tempo > 999) {
