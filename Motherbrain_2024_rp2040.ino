@@ -1,6 +1,18 @@
-//Currently working on getting the interrupt pin to work, test code in handle step in sequencerHandling file. test pin with LED or multimeter.
+/*TODO:
+  DONE make internal clock only work when its been a while since midi clock
+  
+  mute button
+  solo button
+
+  set up load save buttons correctly (shift + slot for load, shift + save + slot for save)
+  sequencer to i2c
+  midi notes to i2c
+  
+  randomize
+*/
 
 //list of things tha neefd to change for 64bit version:
+
 
 
 #define DEBUG_ENABLED true
@@ -27,7 +39,7 @@ bool waitingForTimeOut = false; // are we waiting for more midi notes to come in
 int sparkleLifespan = 200;
 unsigned int tracksBuffer16x8[10] = { 0,0,0,0,0,0,0,0,0,0 }; //tracks 0 - 8 then currentstep then mutes
 unsigned int midiTracksBuffer16x8[10] = { 0,0,0,0,0,0,0,0,0,0 }; //last one used for currentStep, so receivers need to be able to determine that we are not setting step number!
-uint8_t isMutedByte = 0b0000000000000000;
+uint8_t isMutedByte = 0b00000000;
 bool isMuted[8] = { false, false,false, false,false, false,false, false };
 bool isPoly[8] = {true, true, true, true, true, true, true, true};
 
@@ -211,13 +223,13 @@ void setup() {
 }
 bool runClock = true; //run internal clock
 bool midiClockRunning = false;
-unsigned long lastMidiClockReceivedTime = 100000; //how long since last time we received a midi clock
+unsigned long lastMidiClockReceivedTime = 0; //how long since last time we received a midi clock
 int midiClockDiv = 6;
 byte midiClockCounter = 5;
 
 
 void handleUsbMidiClockTicks() {
-	runClock = false;
+	playing = false;
 	lastMidiClockReceivedTime = millis();
 	midiClockRunning = true;
 	midiClockCounter++;
@@ -233,12 +245,15 @@ void handleNoteOn(byte channel, byte pitch, byte velocity){
 
 void midiClockStep(){
  //debugln(midiClockCounter);
- currentStep++;
- handleStep();  // this isn't doing anything
+ currentStep = (currentStep + 1) % GRIDSTEPS;
+handleStep(currentStep);
 }
 
 byte mode = overviewMode;
 void loop() {
+  if (millis() - lastMidiClockReceivedTime > 1000) {  // is it more htan 1000ms since midi clock
+      midiClockRunning = false;
+  }
   //handleRotary(); //handled by interrupt
   handleRotaryPush();
   if (tempo != oldTempo) {

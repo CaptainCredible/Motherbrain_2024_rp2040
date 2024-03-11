@@ -59,12 +59,12 @@ void instSeqModeButts(byte x, byte y) {
       case 2:
       case 3:
         //SAVE
-        if (y == 0) { //top row sequence (page) select buttons
+        if (y == 0) {      //top row sequence (page) select buttons
           currentSeq = x;  // Seq 1 2 3 or 4
           numberToDisplay = x + 1;
           textDisplayStartTime = millis();
           displayNumber(x, 4, 3);
-        } else if (y == 7) { //bottom row save buttons
+        } else if (y == 7) {  //bottom row save buttons
           byte slotToSaveTo = x;
           //debug("save instrument to slot ");
           //debugln(slotToSaveTo);
@@ -136,7 +136,7 @@ void instSeqModeButts(byte x, byte y) {
 void overviewModeButts(byte x, byte y) {
   byte loadSelect = 0;  // Initialize the variables outside the switch
   byte saveSlotSelect = 0;
-  byte trackSelect = 0 ;
+  byte trackSelect = 0;
   if (shiftState) {
     switch (x) {
       case 9:
@@ -145,12 +145,12 @@ void overviewModeButts(byte x, byte y) {
         debugln(y);
         break;
       case 8:  // clear
-      if(utilState){
-        if(y==7)clearInst(currentSeq,ALLTRACKS);
-      } else {
-        clearInst(currentSeq, y);
-      }
-        
+        if (utilState) {
+          if (y == 7) clearInst(currentSeq, ALLTRACKS);
+        } else {
+          clearInst(currentSeq, y);
+        }
+
         break;
       case 7:
       case 6:
@@ -171,17 +171,17 @@ void overviewModeButts(byte x, byte y) {
       case 0:
         saveSlotSelect = x;  // Assign values within the cases
         trackSelect = y;
-        if(utilState){
+        if (utilState) {
           trackSelect = 8;
         }
         debug("save number ");
         debugln(saveSlotSelect);
-        if(utilState){
-          saveCurrentSequenceToEEPROM(saveSlotSelect, ALLTRACKS); //save instrument "y" to slot "x" (saveselect)    
+        if (utilState) {
+          saveCurrentSequenceToEEPROM(saveSlotSelect, ALLTRACKS);  //save instrument "y" to slot "x" (saveselect)
         } else {
-          saveCurrentSequenceToEEPROM(saveSlotSelect, trackSelect); //save instrument "y" to slot "x" (saveselect)
+          saveCurrentSequenceToEEPROM(saveSlotSelect, trackSelect);  //save instrument "y" to slot "x" (saveselect)
         }
-        
+
         break;
       default:
         // Handle other cases when shift is true
@@ -310,13 +310,21 @@ void scanButtsNKnobs() {
   playButtonState = !digitalRead(PLAYPAUSEPIN);
   if (playButtonState != oldPlayButtonState) {
     if (playButtonState) {  // when button goes from off to on
-      playing = !playing;
-      if (!playing) {
-        currentStep = -1;
-      } else if (playing) {
-        lastStepTime = millis();
-        currentStep = 0;
-        handleStep(currentStep);
+      //check if we are under midi clock:
+      if(!midiClockRunning){
+        playing = !playing;
+        if (!playing) {
+          currentStep = -1;
+        } else if (playing) {
+          lastStepTime = millis();
+          currentStep = 0;
+          handleStep(currentStep);
+        }
+      } else {
+        if(shiftState){
+          currentStep = -1;
+          midiClockCounter = 5;
+        }
       }
     }
     oldPlayButtonState = playButtonState;
@@ -403,8 +411,8 @@ void drawRotaryMasterCounterOverSerial() {
 }
 
 void rotaryMove(int moveAmount) {
-  if(mode == overviewMode && utilState){
-    tempo = tempo + moveAmount*10;
+  if (mode == overviewMode && utilState) {
+    tempo = tempo + moveAmount * 10;
   }
 
   if (shiftState) {
@@ -415,7 +423,6 @@ void rotaryMove(int moveAmount) {
     viewOffset += moveAmount;
     if (viewOffset > maxViewOffset) viewOffset = maxViewOffset;
     if (viewOffset < 0) viewOffset = 0;
-
   }
 
   if (tempo > 999) {
