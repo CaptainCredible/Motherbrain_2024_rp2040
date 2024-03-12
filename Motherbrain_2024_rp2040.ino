@@ -56,6 +56,18 @@ byte trackColors[8][3] = {
   { 118, 60, 60 }  // Violet faded
 };
 
+byte fadedTrackColors[8][3] = {
+  { 128, 0, 0 },     // Red
+  { 128, 50, 0 },   // Darker Orange
+  { 128, 128, 15 },  // Vivid Yellow
+  { 0, 64, 0 },     // Green
+  { 0, 128, 128 },   // Cyan
+  { 0, 0, 128 },     // Blue
+  { 37, 0, 65 },    // Indigo
+  //{ 238, 130, 238 }  // Violet
+  { 59, 30, 30 }  // Violet faded faded
+};
+
 //averaging for pot
 #define NUM_READINGS 30      // Number of readings to average
 int readings[NUM_READINGS];  // Array to store the last n readings

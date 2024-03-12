@@ -201,7 +201,7 @@ void overviewModeButts(byte x, byte y) {
           debug("unmuted ");
         }
         debugln(y);
-        Serial.println(mutes, BIN);
+        
         break;
       case 13:  // solo column
         toggleSolo(y);

@@ -226,6 +226,8 @@ void drawStepState(uint8_t sequence, uint8_t instrument, uint8_t step) {
   }
 }
 
+byte overviewColor[3] = {100,70,50};
+byte mutedColor[3] = {40,40,40};
 
 void drawSeqOverview(uint8_t currentSeq) {
   int fadedAmount = 0;  // doesnt work very well
@@ -235,15 +237,19 @@ void drawSeqOverview(uint8_t currentSeq) {
     } else {
       fadedAmount = 0;
     }
-    int currentRed = trackColors[selectInst][0] >> fadedAmount;
-    if (currentRed < 5) currentRed = 5;
-    int currentGreen = trackColors[selectInst][1] >> fadedAmount;
-    if (currentGreen < 5) currentGreen = 5;
-    int currentBlue = trackColors[selectInst][2] >> fadedAmount;
-    if (currentBlue < 5) currentBlue = 5;
+    int thisTrackRed = trackColors[selectInst][0] >> fadedAmount;
+    if (thisTrackRed < 5) thisTrackRed = 5;
+    int thisTrackGreen = trackColors[selectInst][1] >> fadedAmount;
+    if (thisTrackGreen < 5) thisTrackGreen = 5;
+    int thisTrackBlue = trackColors[selectInst][2] >> fadedAmount;
+    if (thisTrackBlue < 5) thisTrackBlue = 5;
     for (uint8_t step = 0; step < GRIDSTEPS; step++) {
       if (seqMatrix[currentSeq][selectInst][step] > 0) {
-        setPixelXY(step, selectInst, currentRed, currentGreen, currentBlue);  // assume i is the Y-coordinate here
+
+        setPixelXY(step, selectInst, overviewColor[0], overviewColor[1], overviewColor[2]);  // assume i is the Y-coordinate here
+      }
+      if(step == 15){
+        setPixelXY(step, selectInst, thisTrackRed, thisTrackGreen, thisTrackBlue);  // assume i is the Y-coordinate here
       }
     }
   }
