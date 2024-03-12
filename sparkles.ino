@@ -4,13 +4,15 @@ class Sparkle {
 private:
     uint16_t x, y;
     byte red, green, blue;
+    byte startRed, startGreen, startBlue; // Starting color components
     byte targetRed, targetGreen, targetBlue; // Target color components
     unsigned long timeSet;
     unsigned long lifespan;
 
+
 public:
     // Default constructor
-    Sparkle() : x(0), y(0), red(255), green(255), blue(255), targetRed(255), targetGreen(255), targetBlue(255), lifespan(0), timeSet(0) {}
+    Sparkle() : x(0), y(0), red(255), green(255), blue(255), targetRed(0), targetGreen(0), targetBlue(0), lifespan(0), timeSet(0) {}
 
     // Constructor with target color
     Sparkle(uint16_t x, uint16_t y, byte targetRed, byte targetGreen, byte targetBlue, unsigned long lifespan) 

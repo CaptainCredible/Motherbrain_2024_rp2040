@@ -101,8 +101,6 @@ void triggerImmediately(byte track, byte note) {
 		//hijackUSBMidiTrackBuffer(note, track);
 }
 
-
-
 void sendMutes() {
 	if (!waitingForTimeOut) { // waitingfortimeout is waiting for more midi messages before sending radiomessage
 		midiTracksBuffer16x8[9] = isMutedByte;
@@ -112,6 +110,4 @@ void sendMutes() {
 
 //microbit read code
 //let myNum = pins.i2cReadNumber(48, NumberFormat.UInt8LE, false);
-
-
 

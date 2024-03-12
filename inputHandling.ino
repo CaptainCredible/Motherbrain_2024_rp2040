@@ -52,7 +52,7 @@ void instSeqModeButts(byte x, byte y) {
     debug(x);
     debug("  y = ");
     debugln(y);
-
+    byte slotSelect = x;
     switch (x) {
       case 0:
       case 1:
@@ -64,11 +64,23 @@ void instSeqModeButts(byte x, byte y) {
           numberToDisplay = x + 1;
           textDisplayStartTime = millis();
           displayNumber(x, 4, 3);
-        } else if (y == 7) {  //bottom row save buttons
+        }
+        if (y == 7) {  //bottom row save buttons
+
           byte slotToSaveTo = x;
           //debug("save instrument to slot ");
           //debugln(slotToSaveTo);
-          saveCurrentSequenceToEEPROM(slotToSaveTo, currentInst);
+          if (buttStates2D[11][7] == true) {  //is the save button pressed?
+            saveCurrentSequenceToEEPROM(slotSelect, currentInst);
+          } else {
+            if (!utilState) {
+            //debug("load this instrument from slot ");
+            recallSequenceFromEEPROM(slotSelect, currentInst);
+          } else {
+            //debug("load all instruments from slot ");
+            recallSequenceFromEEPROM(slotSelect, ALLTRACKS);
+          }
+          }
         }
         break;
 
@@ -76,20 +88,7 @@ void instSeqModeButts(byte x, byte y) {
       case 5:
       case 6:
       case 7:
-        {
-          //LOAD
-          byte slotToLoadFrom = x - 4;  //change x numbers 4,5,6,7 to slot numbers 0,1,2,3
-          if (!utilState) {
-            //debug("load this instrument from slot ");
-            recallSequenceFromEEPROM(slotToLoadFrom, currentInst);
-          } else {
-            //debug("load all instruments from slot ");
-            recallSequenceFromEEPROM(slotToLoadFrom, ALLTRACKS);
-          }
-          //debugln(slotToLoadFrom);
           break;
-        }
-
       case 8:  //clear
         if (y == 7) {
           clearTrack(currentSeq, currentInst);
@@ -134,9 +133,8 @@ void instSeqModeButts(byte x, byte y) {
 
 
 void overviewModeButts(byte x, byte y) {
-  byte loadSelect = 0;  // Initialize the variables outside the switch
-  byte saveSlotSelect = 0;
   byte trackSelect = 0;
+  byte slotSelect = x;  // Assign values within the cases
   if (shiftState) {
     switch (x) {
       case 9:
@@ -156,32 +154,39 @@ void overviewModeButts(byte x, byte y) {
       case 6:
       case 5:
       case 4:
-        loadSelect = x - 4;  // Assign values within the cases
-        debug("load number ");
-        debugln(loadSelect);
-        if (!utilState) {
-          recallSequenceFromEEPROM(loadSelect, y);
-        } else {
-          recallSequenceFromEEPROM(loadSelect, ALLTRACKS);
-        }
         break;
       case 3:
       case 2:
       case 1:
       case 0:
-        saveSlotSelect = x;  // Assign values within the cases
         trackSelect = y;
         if (utilState) {
           trackSelect = 8;
         }
-        debug("save number ");
-        debugln(saveSlotSelect);
-        if (utilState) {
-          saveCurrentSequenceToEEPROM(saveSlotSelect, ALLTRACKS);  //save instrument "y" to slot "x" (saveselect)
-        } else {
-          saveCurrentSequenceToEEPROM(saveSlotSelect, trackSelect);  //save instrument "y" to slot "x" (saveselect)
-        }
+        debug("slot number ");
+        debugln(slotSelect);
+        if (buttStates2D[11][7] == true) {  //is the save button pressed?
+          debugln("SAVE BITCH!");
+          if (utilState) {
+            saveCurrentSequenceToEEPROM(slotSelect, ALLTRACKS);  //save instrument "y" to slot "x" (saveselect)
+          } else {
+            saveCurrentSequenceToEEPROM(slotSelect, trackSelect);  //save instrument "y" to slot "x" (saveselect)
+          }
+        } else {  // if save button is not held in
+          if (!utilState) {
+            recallSequenceFromEEPROM(slotSelect, y);
+            for(byte i = 7; i>y; i--){
+              addSparkle(x, i, 0, 0, 50, sparkleLifespan);  // MAKE LOAD ANIM WITH THIS!!!
+            }
+            for(byte i = x; i<15; i++){
+              addSparkle(i, y, 0, 0, 50, sparkleLifespan);  // MAKE LOAD ANIM WITH THIS!!!
+            }
+            
 
+          } else {
+            recallSequenceFromEEPROM(slotSelect, ALLTRACKS);
+          }
+        }
         break;
       default:
         // Handle other cases when shift is true
@@ -195,13 +200,13 @@ void overviewModeButts(byte x, byte y) {
         break;
       case 14:  // mute column
         toggleMute(y);
-        if(bitRead(mutes, y)){
+        if (bitRead(mutes, y)) {
           debug("muted ");
         } else {
           debug("unmuted ");
         }
         debugln(y);
-        
+
         break;
       case 13:  // solo column
         toggleSolo(y);
@@ -233,7 +238,6 @@ void overviewModeButts(byte x, byte y) {
     }
   }
 }
-
 
 
 void setupGridPins() {
@@ -316,7 +320,7 @@ void scanButtsNKnobs() {
   if (playButtonState != oldPlayButtonState) {
     if (playButtonState) {  // when button goes from off to on
       //check if we are under midi clock:
-      if(!midiClockRunning){
+      if (!midiClockRunning) {
         playing = !playing;
         if (!playing) {
           currentStep = -1;
@@ -326,7 +330,7 @@ void scanButtsNKnobs() {
           handleStep(currentStep);
         }
       } else {
-        if(shiftState){
+        if (shiftState) {
           currentStep = -1;
           midiClockCounter = 5;
         }
