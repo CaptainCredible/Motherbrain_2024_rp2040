@@ -176,10 +176,12 @@ void overviewModeButts(byte x, byte y) {
           if (!utilState) {
             recallSequenceFromEEPROM(slotSelect, y);
             for(byte i = 7; i>y; i--){
-              addSparkle(x, i, 0, 0, 50, sparkleLifespan);  // MAKE LOAD ANIM WITH THIS!!!
+              addSporkle(x, i, 0, 50, 50, 0, 0, 0,  sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+              //addSparkle(x, i, 0, 0, 50, sparkleLifespan);  // MAKE LOAD ANIM WITH THIS!!!
             }
-            for(byte i = x; i<15; i++){
-              addSparkle(i, y, 0, 0, 50, sparkleLifespan);  // MAKE LOAD ANIM WITH THIS!!!
+            for(byte i = 0; i<15; i++){
+              //addSparkle(i, y, 0, 0, 50, sparkleLifespan);  // MAKE LOAD ANIM WITH THIS!!!
+              addSporkle(i, y, 0, 50, 50, 0, 0, 0,  sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
             }
             
 

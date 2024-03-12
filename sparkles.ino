@@ -12,11 +12,17 @@ private:
 
 public:
     // Default constructor
-    Sparkle() : x(0), y(0), red(255), green(255), blue(255), targetRed(0), targetGreen(0), targetBlue(0), lifespan(0), timeSet(0) {}
+    Sparkle() : x(0), y(0), red(255), green(255), blue(255), targetRed(0), targetGreen(0), targetBlue(0), lifespan(0), timeSet(0), startRed(255), startGreen(255), startBlue(255) {}
 
     // Constructor with target color
     Sparkle(uint16_t x, uint16_t y, byte targetRed, byte targetGreen, byte targetBlue, unsigned long lifespan) 
       : x(x), y(y), red(255), green(255), blue(255), targetRed(targetRed), targetGreen(targetGreen), targetBlue(targetBlue), lifespan(lifespan) {
+        timeSet = millis();  // Capture the current time
+    }
+
+        // Constructor updated with start colors
+    Sparkle(uint16_t x, uint16_t y, byte startRed, byte startGreen, byte startBlue, byte targetRed, byte targetGreen, byte targetBlue, unsigned long lifespan) 
+    : x(x), y(y), red(startRed), green(startGreen), blue(startBlue), startRed(startRed), startGreen(startGreen), startBlue(startBlue), targetRed(targetRed), targetGreen(targetGreen), targetBlue(targetBlue), lifespan(lifespan) {
         timeSet = millis();  // Capture the current time
     }
 
@@ -25,9 +31,9 @@ public:
 
         if (elapsed < lifespan) {
             float factor = (float)elapsed / lifespan;
-            red = 255 + factor * (targetRed - 255);
-            green = 255 + factor * (targetGreen - 255);
-            blue = 255 + factor * (targetBlue - 255);
+            red = startRed + factor * (targetRed - startRed);
+            green = startGreen + factor * (targetGreen - startGreen);
+            blue = startBlue + factor * (targetBlue - startBlue);
         } else {
             red = targetRed;
             green = targetGreen;
@@ -67,6 +73,14 @@ bool isFull() {
 
 void addSparkle(uint16_t x, uint16_t y, byte targetRed, byte targetGreen, byte targetBlue, unsigned long lifespan) {
     sparkles[endIdx] = Sparkle(x, y, targetRed, targetGreen, targetBlue, lifespan);
+    if (isFull()) {
+        startIdx = (startIdx + 1) % MAX_SPARKLES;  // Remove the oldest sparkle
+    }
+    endIdx = (endIdx + 1) % MAX_SPARKLES;
+}
+
+void addSporkle(uint16_t x, uint16_t y, byte startRed, byte startGreen, byte startBlue, byte targetRed, byte targetGreen, byte targetBlue, unsigned long lifespan) {
+    sparkles[endIdx] = Sparkle(x, y, startRed, startGreen, startBlue, targetRed, targetGreen, targetBlue, lifespan);
     if (isFull()) {
         startIdx = (startIdx + 1) % MAX_SPARKLES;  // Remove the oldest sparkle
     }

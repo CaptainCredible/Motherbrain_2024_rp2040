@@ -362,12 +362,14 @@ void handleStep(byte stepToHandle) {
               currentInstCol[0] = trackColors[currentTrack][0];
               currentInstCol[1] = trackColors[currentTrack][1];
               currentInstCol[2] = trackColors[currentTrack][2];
-              addSparkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+              //addSparkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan*4);  // make that pixel sparkle for 500ms, also invert Y axis
+              addSporkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], overviewColor[0], overviewColor[1], overviewColor[2],  sparkleLifespan*2);  // make that pixel sparkle for 500ms, also invert Y axis
               alreadyTriggeredSparkleForThisTrack = true;
             }
           } else {
             if ((i >= viewOffset && i <= viewOffset + 7) && (currentTrack == currentInst)) {                                                         // if the triggered note is within the view and we are viewing the track that is playing the note
-              addSparkle(currentStep, (GRIDROWS - 1) - (i - viewOffset), currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+              addSporkle(currentStep, (GRIDROWS - 1) - (i - viewOffset), 200,200,200, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+
             }
           }
         }
