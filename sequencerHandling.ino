@@ -346,25 +346,25 @@ void checkAndHandleTimedNotes() {
 // HANDLE STEP //
 
 void handleStep(byte stepToHandle) {
-  
+
   bool tracksBufferIsEmpty = true;
   // handle notes THIS ONLY ACTUALLY SCANS THE CURRENTLY VIEWED INSTRUMENT!!!
   byte maxNotes = 16;  //our datastructure actually allows 64bit steps but microbitOrchestra currently only likes 16bit
   for (byte currentTrack = 0; currentTrack < 8; currentTrack++) {
-    
-    tracksBuffer16x8[currentTrack] = seqMatrix[currentSeq][currentTrack][currentStep];
-    
-    if(tracksBuffer16x8[currentTrack != 0]){
-      tracksBufferIsEmpty = false;  // keep track of whether the tracksbuffer has any data that needs to be sent.
-    }
-    
-    //MIDI OUTPUT AND SPARKLES:
-    bool alreadyTriggeredSparkleForThisTrack = false;
-    for (byte i = 0; i < maxNotes; i++) {
-      byte actualNote = i;
-      if (getNote(currentSeq, currentTrack, currentStep, i)) {  //we found a note
-        if (!bitRead(mutes, currentTrack)) {                    // if this track is not muted
-          triggerMidiNote(actualNote, currentTrack + 1);        //add one because midichannels start with 1
+    if (!bitRead(mutes, currentTrack)) {  // if this track is not muted
+      tracksBuffer16x8[currentTrack] = seqMatrix[currentSeq][currentTrack][currentStep];
+
+      if (tracksBuffer16x8[currentTrack != 0]) {
+        tracksBufferIsEmpty = false;  // keep track of whether the tracksbuffer has any data that needs to be sent.
+      }
+
+      //MIDI OUTPUT AND SPARKLES:
+      bool alreadyTriggeredSparkleForThisTrack = false;
+      for (byte i = 0; i < maxNotes; i++) {
+        byte actualNote = i;
+        if (getNote(currentSeq, currentTrack, currentStep, i)) {  //we found a note
+
+          triggerMidiNote(actualNote, currentTrack + 1);  //add one because midichannels start with 1
           //need added logic here to only make sparkles fot the track we are viewing
           if (mode == overviewMode) {
             if (!alreadyTriggeredSparkleForThisTrack) {
@@ -395,6 +395,8 @@ void handleStep(byte stepToHandle) {
   // }
   debugln();
   //tellUbitToAskForData();
+  tracksBuffer16x8[8] = currentStep;  //slot number eight is where we send the current step number
+  tracksBuffer16x8[9] = mutes;   //slot 9 is where the mutes are stored
   sendTracksBuffer();
 }
 

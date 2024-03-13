@@ -1,13 +1,11 @@
 /*TODO:
-  DONE make internal clock only work when its been a while since midi clock
   
-  DONE mute button
-  solo button is maybe dumb...?
-
-  set up load save buttons correctly (shift + slot for load, shift + save + slot for save)
-  sequencer to i2c
+  mute button as shift function!
   midi notes to i2c
   
+  DONE set up load save buttons correctly (shift + slot for load, shift + save + slot for save)
+  DONE make internal clock only work when its been a while since midi clock
+  DONE sequencer to i2c
   randomize
 */
 
@@ -34,13 +32,13 @@
 #define instSeqMode 1
 #define ALLTRACKS 8
 
-bool waitingForTimeOut = false; // are we waiting for more midi notes to come in? 
+bool waitingForTimeOut = false;  // are we waiting for more midi notes to come in?
 int sparkleLifespan = 200;
-unsigned int tracksBuffer16x8[10] = { 0,0,0,0,0,0,0,0,0,0 }; //tracks 0 - 8 then currentstep then mutes
-unsigned int midiTracksBuffer16x8[10] = { 0,0,0,0,0,0,0,0,0,0 }; //last one used for currentStep, so receivers need to be able to determine that we are not setting step number!
-uint8_t isMutedByte = 0b00000000;
-bool isMuted[8] = { false, false,false, false,false, false,false, false };
-bool isPoly[8] = {true, true, true, true, true, true, true, true};
+uint16_t tracksBuffer16x8[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };      //tracks 0 - 8 then currentstep then mutes
+uint16_t midiTracksBuffer16x8[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  //last one used for currentStep, so receivers need to be able to determine that we are not setting step number!
+//uint8_t isMutedByte = 0b00000000;
+bool isMuted[8] = { false, false, false, false, false, false, false, false };
+bool isPoly[8] = { true, true, true, true, true, true, true, true };
 
 //trackColours:
 byte trackColors[8][3] = {
@@ -57,12 +55,12 @@ byte trackColors[8][3] = {
 
 byte fadedTrackColors[8][3] = {
   { 128, 0, 0 },     // Red
-  { 128, 50, 0 },   // Darker Orange
+  { 128, 50, 0 },    // Darker Orange
   { 128, 128, 15 },  // Vivid Yellow
-  { 0, 64, 0 },     // Green
+  { 0, 64, 0 },      // Green
   { 0, 128, 128 },   // Cyan
   { 0, 0, 128 },     // Blue
-  { 37, 0, 65 },    // Indigo
+  { 37, 0, 65 },     // Indigo
   //{ 238, 130, 238 }  // Violet
   { 59, 30, 30 }  // Violet faded faded
 };
@@ -78,6 +76,10 @@ unsigned long timeOutStamp = 0;
 
 // USB MIDI object
 Adafruit_USBD_MIDI usb_midi;
+unsigned long timeOutDeadline = 0; // to store the deadline for midi message
+int USBReceiveTimeOutThresh = 4; //timeframe to wait for midi notes
+bool hadANoteOn = false;
+
 
 //seq related
 int currentStep = -1;
@@ -140,7 +142,7 @@ uint16_t knobVal = 0;
 
 //SEQ related
 byte solos = 0b00000000;
-byte mutes = 0b00000000;
+uint16_t mutes = 0b00000000;
 int viewOffset = 0;
 byte maxViewOffset = 7;
 
@@ -176,7 +178,7 @@ void setup() {
   //wire
   Wire1.setSDA(14);
   Wire1.setSCL(15);
-  Wire1.begin(48);  // do i need an argument, address??
+  Wire1.begin(8);  // do i need an argument, address??
   //Wire1.onRequest(req);
   Wire1.onRequest(requestEvent);
   EEPROM.begin(EEPROM_SIZE);
@@ -190,36 +192,38 @@ void setup() {
   pinMode(PLAYPAUSEPIN, INPUT_PULLUP);
   pinMode(UTILPIN, INPUT_PULLUP);
 
+  //rotary
   pinMode(clkPin, INPUT_PULLUP);
   pinMode(dtPin, INPUT_PULLUP);
   pinMode(swPin, INPUT_PULLUP);
   // Read the initial state of clkPin, swPin
   clkLastState = digitalRead(clkPin);
   swLastState = digitalRead(swPin);
+  attachInterrupt(digitalPinToInterrupt(clkPin), handleRotary, CHANGE);  // Attach the interrupts
 
+  //interrup pin to microbit
   pinMode(interruptPin, OUTPUT);  // to interrupt microbit
   digitalWrite(interruptPin, LOW);
 
-  attachInterrupt(digitalPinToInterrupt(clkPin), handleRotary, CHANGE);  // Attach the interrupts
-  //attachInterrupt(digitalPinToInterrupt(swPin), rotaryClick, FALLING);   // Assuming the button pulls to GND when pressed (THIS TRIGGERS ALSO WHEN KNOB IS TURNED ????)
-
 //MIDI
 #if defined(ARDUINO_ARCH_MBED) && defined(ARDUINO_ARCH_RP2040)
-    // Manual begin() is required on core without built-in support for TinyUSB such as mbed rp2040
+  // Manual begin() is required on core without built-in support for TinyUSB such as mbed rp2040
   TinyUSB_Device_Init(0);
 #endif
   MIDI.begin(MIDI_CHANNEL_OMNI);
   MIDI.setHandleClock(handleUsbMidiClockTicks);
-  MIDI.setHandleNoteOn(handleNoteOn);  // Put only the name of the function
+  MIDI.setHandleNoteOn(preHandleUSBNoteOn);
+	MIDI.setHandleNoteOff(HandleUsbNoteOff);
+  
   //GRID
   setupGridPins();  //setup pins for buttonGrid
   //pixels.begin();   // INITIALIZE NeoPixel strip object (REQUIRED)
   FastLED.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);  // INITIALIZE NeoPixel strip object (REQUIRED)
   initLedGridState();
   FastLED.show();
-  //delay(1000); // needed? 
+  //delay(1000); // needed?
   testSetXY(100);
-  
+
   //wait for mount
   //while( !TinyUSBDevice.mounted()) delay(1);  //this means it wont finish booting if not connected to poooooter
   // rewrote it with timeout
@@ -250,37 +254,37 @@ void setup() {
   currentSeq = 0;
 }
 
-bool runClock = true; //run internal clock
+bool runClock = true;  //run internal clock
 bool midiClockRunning = false;
-unsigned long lastMidiClockReceivedTime = 0; //how long since last time we received a midi clock
+unsigned long lastMidiClockReceivedTime = 0;  //how long since last time we received a midi clock
 int midiClockDiv = 6;
 byte midiClockCounter = 5;
 
 void handleUsbMidiClockTicks() {
-	playing = false;
-	lastMidiClockReceivedTime = millis();
-	midiClockRunning = true;
-	midiClockCounter++;
-	midiClockCounter = midiClockCounter % midiClockDiv;
-	if (midiClockCounter == 0) {
-		midiClockStep();
-	}
+  playing = false;
+  lastMidiClockReceivedTime = millis();
+  midiClockRunning = true;
+  midiClockCounter++;
+  midiClockCounter = midiClockCounter % midiClockDiv;
+  if (midiClockCounter == 0) {
+    midiClockStep();
+  }
 }
 
-void handleNoteOn(byte channel, byte pitch, byte velocity){
+void handleNoteOn(byte channel, byte pitch, byte velocity) {
   debugln("note");
 }
 
-void midiClockStep(){
- //debugln(midiClockCounter);
- currentStep = (currentStep + 1) % GRIDSTEPS;
-handleStep(currentStep);
+void midiClockStep() {
+  //debugln(midiClockCounter);
+  currentStep = (currentStep + 1) % GRIDSTEPS;
+  handleStep(currentStep);
 }
 
 byte mode = overviewMode;
 void loop() {
   if (millis() - lastMidiClockReceivedTime > 1000) {  // is it more htan 1000ms since midi clock
-      midiClockRunning = false;
+    midiClockRunning = false;
   }
   //handleRotary(); //handled by interrupt
   handleRotaryPush();
@@ -312,7 +316,11 @@ void loop() {
   handleI2CTimeout();
   FastLED.show();
   MIDI.read();
+  checkTimeOut();  // check i2c timeout
+  checkUSBMidiTimout();
 }
+
+
 
 unsigned long lastStepTime = 0;
 
@@ -332,14 +340,14 @@ void handleOverviewMode() {
 unsigned long lastBlink = 0;
 int blinkDuration = 300;
 bool blinkState = false;
-void displayPageNoBlink(){
-  if(millis() - lastBlink > blinkDuration){
+void displayPageNoBlink() {
+  if (millis() - lastBlink > blinkDuration) {
     blinkState = !blinkState;
     lastBlink = millis();
   }
-  if(blinkState){
-    setPixelXY(currentSeq, 0, 100,0,0); // HERE!!!!  
-    }
+  if (blinkState) {
+    setPixelXY(currentSeq, 0, 100, 0, 0);  // HERE!!!!
+  }
 }
 
 void handleInstSeqMode() {
@@ -429,8 +437,8 @@ void toggleMute(byte trackNumber) {
 void toggleSolo(byte trackNumber) {
   debug("SOLOED ");
   debugln(trackNumber);
-  for(byte i = 0; i < 8; i++ ){
-    if(i == trackNumber){
+  for (byte i = 0; i < 8; i++) {
+    if (i == trackNumber) {
       mutes = setBit(mutes, i, false);
     } else {
       mutes = setBit(mutes, i, true);
