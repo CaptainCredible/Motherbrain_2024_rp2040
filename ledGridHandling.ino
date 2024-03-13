@@ -160,7 +160,7 @@ void crossHair(byte X, byte Y) {
 
 void drawCursor(byte x) {
   for (byte i = 0; i < GRIDROWS; i++) {
-    softSetPixelXY(x, i, 2, 2, 2);
+    softSetPixelXY(x, i, 8, 8, 8);
   }
 }
 

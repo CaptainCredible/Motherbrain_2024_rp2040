@@ -226,8 +226,8 @@ void drawStepState(uint8_t sequence, uint8_t instrument, uint8_t step) {
   }
 }
 
-byte overviewColor[3] = {100,70,50};
-byte mutedColor[3] = {40,40,40};
+byte overviewColor[3] = { 100, 70, 50 };
+byte mutedColor[3] = { 40, 40, 40 };
 
 void drawSeqOverview(uint8_t currentSeq) {
   int fadedAmount = 0;  // doesnt work very well
@@ -248,7 +248,7 @@ void drawSeqOverview(uint8_t currentSeq) {
 
         setPixelXY(step, selectInst, overviewColor[0], overviewColor[1], overviewColor[2]);  // assume i is the Y-coordinate here
       }
-      if(step == 15){
+      if (step == 15) {
         setPixelXY(step, selectInst, thisTrackRed, thisTrackGreen, thisTrackBlue);  // assume i is the Y-coordinate here
       }
     }
@@ -346,10 +346,19 @@ void checkAndHandleTimedNotes() {
 // HANDLE STEP //
 
 void handleStep(byte stepToHandle) {
-  tellUbitToAskForData();
+  
+  bool tracksBufferIsEmpty = true;
   // handle notes THIS ONLY ACTUALLY SCANS THE CURRENTLY VIEWED INSTRUMENT!!!
   byte maxNotes = 16;  //our datastructure actually allows 64bit steps but microbitOrchestra currently only likes 16bit
   for (byte currentTrack = 0; currentTrack < 8; currentTrack++) {
+    
+    tracksBuffer16x8[currentTrack] = seqMatrix[currentSeq][currentTrack][currentStep];
+    
+    if(tracksBuffer16x8[currentTrack != 0]){
+      tracksBufferIsEmpty = false;  // keep track of whether the tracksbuffer has any data that needs to be sent.
+    }
+    
+    //MIDI OUTPUT AND SPARKLES:
     bool alreadyTriggeredSparkleForThisTrack = false;
     for (byte i = 0; i < maxNotes; i++) {
       byte actualNote = i;
@@ -363,19 +372,30 @@ void handleStep(byte stepToHandle) {
               currentInstCol[1] = trackColors[currentTrack][1];
               currentInstCol[2] = trackColors[currentTrack][2];
               //addSparkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan*4);  // make that pixel sparkle for 500ms, also invert Y axis
-              addSporkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], overviewColor[0], overviewColor[1], overviewColor[2],  sparkleLifespan*2);  // make that pixel sparkle for 500ms, also invert Y axis
+              addSporkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], overviewColor[0], overviewColor[1], overviewColor[2], sparkleLifespan * 2);  // make that pixel sparkle for 500ms, also invert Y axis
               alreadyTriggeredSparkleForThisTrack = true;
             }
           } else {
-            if ((i >= viewOffset && i <= viewOffset + 7) && (currentTrack == currentInst)) {                                                         // if the triggered note is within the view and we are viewing the track that is playing the note
-              addSporkle(currentStep, (GRIDROWS - 1) - (i - viewOffset), 200,200,200, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
-
+            if ((i >= viewOffset && i <= viewOffset + 7) && (currentTrack == currentInst)) {                                                                        // if the triggered note is within the view and we are viewing the track that is playing the note
+              addSporkle(currentStep, (GRIDROWS - 1) - (i - viewOffset), 200, 200, 200, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
             }
           }
         }
       }
     }
   }
+
+
+
+  debug("step ");
+  debug(currentStep);
+  // for (byte i = 0; i < 8; i++) {
+  //   debug(" - ");
+  //   debug(tracksBuffer16x8[i]);
+  // }
+  debugln();
+  //tellUbitToAskForData();
+  sendTracksBuffer();
 }
 
 void triggerMidiNote(byte noteToSend, byte channelToSend) {
@@ -385,14 +405,6 @@ void triggerMidiNote(byte noteToSend, byte channelToSend) {
     addTimedNote(midiNote, 50, channelToSend);  // Assuming 50ms is the duration for each note
   }
 }
-
-
-////??????
-const int maxSize = 10;  // Maximum size of the  stack
-int myStack[maxSize];    // Stack implemented as an array
-int top = -1;            // Initialize the top of the stack to -1 (empty)
-////??????
-
 
 
 void clearTracksBuffer() {

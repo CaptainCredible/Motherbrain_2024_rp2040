@@ -1,9 +1,8 @@
-
 unsigned int i2cFails = 0;
 
 template <typename T> unsigned int I2C_writeAnything (const T& value)
   {
-  Wire.write((byte *) &value, sizeof (value));
+  Wire1.write((byte *) &value, sizeof (value));
   return sizeof (value);
   }  // end of I2C_writeAnything
 
@@ -12,7 +11,7 @@ template <typename T> unsigned int I2C_readAnything(T& value)
     byte * p = (byte*) &value;
     unsigned int i;
     for (i = 0; i < sizeof value; i++)
-          *p++ = Wire.read();
+          *p++ = Wire1.read();
     return i;
   }  // end of I2C_readAnything
 
@@ -23,9 +22,7 @@ void req() {
   //debugln("gotRequest");
 }
 
-
 // INTERRUPT uBit //
-
 unsigned long i2cTimeout = 0;
 byte i2cTimeoutDuration = 20;
 bool isTimedOut = false;
@@ -47,13 +44,15 @@ void tellUbitToAskForData(){
 
 bool isSending = false;
 void sendTracksBuffer() {
-	Serial.println("tracksBuffer = ");
+	debug("tracksBuffer = ");
 	for (int i = 0; i < 10; i++) {
-		debugln(tracksBuffer16x8[i]);
+		debug(tracksBuffer16x8[i]);
+    debug(" - ");
 	}
+  debugln();
 	digitalWrite(interruptPin, LOW); //start by telling microbit to request track
 	isSending = true;
-	timeOutStamp = millis();
+	i2cTimeout = millis();
 }
 
 bool sentAMidiBuffer = false;
@@ -85,14 +84,12 @@ void clearMidiTracksBuffer() {									//also sets sentAMidiBuffer to false
 	sentAMidiBuffer = false;									//set flag back to normal buffers.
 }
 
-
-
 #define timeOut  10
 void checkTimeOut() {
-	if (millis() - timeOutStamp > timeOut && isSending) {
+	if (millis() - i2cTimeout > timeOut && isSending) {
 		digitalWrite(interruptPin, HIGH);
 		isSending = false;
-		//Serial.println(" i2c TIMEOUT! ");
+		Serial.println(" i2c TIMEOUT! ");
 		i2cFails++;
 	}
 }
@@ -107,7 +104,3 @@ void sendMutes() {
 		//sendUsbMidiPackage(); some kind of hack i guess to send current data
 	}
 }
-
-//microbit read code
-//let myNum = pins.i2cReadNumber(48, NumberFormat.UInt8LE, false);
-

@@ -13,8 +13,6 @@
 
 //list of things tha neefd to change for 64bit version:
 
-
-
 #define DEBUG_ENABLED true
 
 #if DEBUG_ENABLED
@@ -35,6 +33,7 @@
 #define overviewMode 0
 #define instSeqMode 1
 #define ALLTRACKS 8
+
 bool waitingForTimeOut = false; // are we waiting for more midi notes to come in? 
 int sparkleLifespan = 200;
 unsigned int tracksBuffer16x8[10] = { 0,0,0,0,0,0,0,0,0,0 }; //tracks 0 - 8 then currentstep then mutes
@@ -178,7 +177,8 @@ void setup() {
   Wire1.setSDA(14);
   Wire1.setSCL(15);
   Wire1.begin(48);  // do i need an argument, address??
-  Wire1.onRequest(req);
+  //Wire1.onRequest(req);
+  Wire1.onRequest(requestEvent);
   EEPROM.begin(EEPROM_SIZE);
   //init averaging:
   for (int i = 0; i < NUM_READINGS; i++) {
@@ -231,14 +231,30 @@ void setup() {
     }
   }
   testSetXY(255);
+  currentSeq = 0;
   recallSequenceFromEEPROM(0, ALLTRACKS);
+  currentSeq = 1;
+  recallSequenceFromEEPROM(1, ALLTRACKS);
+  currentSeq = 2;
+  recallSequenceFromEEPROM(2, ALLTRACKS);
+  currentSeq = 3;
+  recallSequenceFromEEPROM(3, ALLTRACKS);
+  currentSeq = 4;
+  recallSequenceFromEEPROM(0, ALLTRACKS);
+  currentSeq = 5;
+  recallSequenceFromEEPROM(1, ALLTRACKS);
+  currentSeq = 6;
+  recallSequenceFromEEPROM(2, ALLTRACKS);
+  currentSeq = 7;
+  recallSequenceFromEEPROM(3, ALLTRACKS);
+  currentSeq = 0;
 }
+
 bool runClock = true; //run internal clock
 bool midiClockRunning = false;
 unsigned long lastMidiClockReceivedTime = 0; //how long since last time we received a midi clock
 int midiClockDiv = 6;
 byte midiClockCounter = 5;
-
 
 void handleUsbMidiClockTicks() {
 	playing = false;
@@ -274,6 +290,7 @@ void loop() {
     textDisplayStartTime = millis();
     oldTempo = tempo;
   }
+
   scanGrid();  //scan the grid
   scanButtsNKnobs();
   FastLED.clear();
@@ -285,6 +302,7 @@ void loop() {
       handleOverviewMode();
       break;
   }
+  displayPageNoBlink();
   updateSparkles();
   if (millis() < textDisplayStartTime + textDisplayTimeout) {
     displayNumber(numberToDisplay, 4, 3);
@@ -309,6 +327,19 @@ void handleOverviewMode() {
       }
     }
   }
+}
+
+unsigned long lastBlink = 0;
+int blinkDuration = 300;
+bool blinkState = false;
+void displayPageNoBlink(){
+  if(millis() - lastBlink > blinkDuration){
+    blinkState = !blinkState;
+    lastBlink = millis();
+  }
+  if(blinkState){
+    setPixelXY(currentSeq, 0, 100,0,0); // HERE!!!!  
+    }
 }
 
 void handleInstSeqMode() {

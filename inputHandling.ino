@@ -1,17 +1,4 @@
-/* 
-FUNCTIONS NEEDED:
 
-clearLeds()
-changeColor (byte r, byte g, byte b)
-setPixel (byte x, byte y, byte r, byte g, byte b)
-setCursorColor(byte r, byte g, byte b)
-drawCursor(byte step)
-
-writeText
-
-updateScreen()
-
-*/
 
 byte AY = 11;
 byte BY = 12;
@@ -74,12 +61,12 @@ void instSeqModeButts(byte x, byte y) {
             saveCurrentSequenceToEEPROM(slotSelect, currentInst);
           } else {
             if (!utilState) {
-            //debug("load this instrument from slot ");
-            recallSequenceFromEEPROM(slotSelect, currentInst);
-          } else {
-            //debug("load all instruments from slot ");
-            recallSequenceFromEEPROM(slotSelect, ALLTRACKS);
-          }
+              //debug("load this instrument from slot ");
+              recallSequenceFromEEPROM(slotSelect, currentInst);
+            } else {
+              //debug("load all instruments from slot ");
+              recallSequenceFromEEPROM(slotSelect, ALLTRACKS);
+            }
           }
         }
         break;
@@ -88,7 +75,7 @@ void instSeqModeButts(byte x, byte y) {
       case 5:
       case 6:
       case 7:
-          break;
+        break;
       case 8:  //clear
         if (y == 7) {
           clearTrack(currentSeq, currentInst);
@@ -169,24 +156,44 @@ void overviewModeButts(byte x, byte y) {
           debugln("SAVE BITCH!");
           if (utilState) {
             saveCurrentSequenceToEEPROM(slotSelect, ALLTRACKS);  //save instrument "y" to slot "x" (saveselect)
+            for(byte i = 0; i<4; i++){
+              for(byte j = 0; j<8; j++){
+                addSporkle(i, j, 40, 0, 0, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+              }
+              
+            }
           } else {
             saveCurrentSequenceToEEPROM(slotSelect, trackSelect);  //save instrument "y" to slot "x" (saveselect)
+            for (byte i = 0; i < 8; i++) {
+              addSporkle(x, i, 50, 0, 0, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+              //addSparkle(x, i, 0, 0, 50, sparkleLifespan);  // MAKE LOAD ANIM WITH THIS!!!
+            }
+            for (byte i = 0; i < 15; i++) {
+              //addSparkle(i, y, 0, 0, 50, sparkleLifespan);  // MAKE LOAD ANIM WITH THIS!!!
+              addSporkle(i, y, 50, 0, 0, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+            }
           }
         } else {  // if save button is not held in
           if (!utilState) {
             recallSequenceFromEEPROM(slotSelect, y);
-            for(byte i = 7; i>y; i--){
-              addSporkle(x, i, 0, 50, 50, 0, 0, 0,  sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+            for (byte i = 0; i < 8; i++) {
+              addSporkle(x, i, 0, 50, 50, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
               //addSparkle(x, i, 0, 0, 50, sparkleLifespan);  // MAKE LOAD ANIM WITH THIS!!!
             }
-            for(byte i = 0; i<15; i++){
+            for (byte i = 0; i < 15; i++) {
               //addSparkle(i, y, 0, 0, 50, sparkleLifespan);  // MAKE LOAD ANIM WITH THIS!!!
-              addSporkle(i, y, 0, 50, 50, 0, 0, 0,  sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+              addSporkle(i, y, 0, 50, 50, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
             }
-            
+
 
           } else {
             recallSequenceFromEEPROM(slotSelect, ALLTRACKS);
+            for(byte i = 0; i<4; i++){
+              for(byte j = 0; j<8; j++){
+                addSporkle(i, j, 0, 20, 20, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+              }
+              
+            }
           }
         }
         break;
@@ -229,8 +236,6 @@ void overviewModeButts(byte x, byte y) {
           textDisplayStartTime = millis();
         }
         displayNumber(x, 4, 3);
-
-
       default:
         debug("x = ");
         debug(x);
