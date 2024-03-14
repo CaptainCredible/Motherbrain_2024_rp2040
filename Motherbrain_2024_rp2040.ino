@@ -1,15 +1,4 @@
-/*TODO:
-  
-  mute button as shift function!
-  midi notes to i2c
-  
-  DONE set up load save buttons correctly (shift + slot for load, shift + save + slot for save)
-  DONE make internal clock only work when its been a while since midi clock
-  DONE sequencer to i2c
-  randomize
-*/
 
-//list of things tha neefd to change for 64bit version:
 
 #define DEBUG_ENABLED true
 
@@ -32,7 +21,7 @@
 #define instSeqMode 1
 #define ALLTRACKS 8
 
-bool waitingForTimeOut = false;  // are we waiting for more midi notes to come in?
+
 int sparkleLifespan = 200;
 uint16_t tracksBuffer16x8[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };      //tracks 0 - 8 then currentstep then mutes
 uint16_t midiTracksBuffer16x8[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  //last one used for currentStep, so receivers need to be able to determine that we are not setting step number!
@@ -42,27 +31,25 @@ bool isPoly[8] = { true, true, true, true, true, true, true, true };
 
 //trackColours:
 byte trackColors[8][3] = {
-  { 255, 0, 0 },     // Red
-  { 255, 100, 0 },   // Darker Orange
-  { 255, 255, 30 },  // Vivid Yellow
-  { 0, 128, 0 },     // Green
-  { 0, 255, 255 },   // Cyan
-  { 0, 0, 255 },     // Blue
+  { 118, 60, 60 },   // Violet faded
   { 75, 0, 130 },    // Indigo
-  //{ 238, 130, 238 }  // Violet
-  { 118, 60, 60 }  // Violet faded
+  { 0, 0, 255 },     // Blue
+  { 0, 255, 255 },   // Cyan
+  { 0, 128, 0 },     // Green
+  { 255, 255, 30 },  // Vivid Yellow
+  { 255, 100, 0 },   // Darker Orange
+  { 255, 0, 0 }      // Red
 };
 
 byte fadedTrackColors[8][3] = {
-  { 128, 0, 0 },     // Red
-  { 128, 50, 0 },    // Darker Orange
-  { 128, 128, 15 },  // Vivid Yellow
-  { 0, 64, 0 },      // Green
-  { 0, 128, 128 },   // Cyan
-  { 0, 0, 128 },     // Blue
+  { 59, 30, 30 },    // Violet faded faded
   { 37, 0, 65 },     // Indigo
-  //{ 238, 130, 238 }  // Violet
-  { 59, 30, 30 }  // Violet faded faded
+  { 0, 0, 128 },     // Blue
+  { 0, 128, 128 },   // Cyan
+  { 0, 64, 0 },      // Green
+  { 128, 128, 15 },  // Vivid Yellow
+  { 128, 50, 0 },    // Darker Orange
+  { 128, 0, 0 }      // Red
 };
 
 //averaging for pot
@@ -72,13 +59,10 @@ int readIndex = 0;           // Index of current reading
 int total = 0;               // Running total of readings
 int tempo = 120;
 int oldTempo = 0;
-unsigned long timeOutStamp = 0;
 
 // USB MIDI object
 Adafruit_USBD_MIDI usb_midi;
-unsigned long timeOutDeadline = 0; // to store the deadline for midi message
-int USBReceiveTimeOutThresh = 4; //timeframe to wait for midi notes
-bool hadANoteOn = false;
+
 
 
 //seq related
@@ -88,6 +72,10 @@ byte currentInst = 0;
 bool playing = false;
 unsigned int tempoMillis = 100;
 uint16_t numberToDisplay = 0;
+byte solos = 0b00000000;
+uint16_t mutes = 0b00000000;
+int viewOffset = 0;
+byte maxViewOffset = 7;
 
 //led related
 byte cycle = 0;
@@ -140,11 +128,6 @@ bool oldShiftState = false;
 bool rotarySwitchState = false;
 uint16_t knobVal = 0;
 
-//SEQ related
-byte solos = 0b00000000;
-uint16_t mutes = 0b00000000;
-int viewOffset = 0;
-byte maxViewOffset = 7;
 
 //byte byteButtStates2D[GRIDSTEPS][GRIDROWS];
 bool buttStates2D[GRIDSTEPS][GRIDROWS];
@@ -271,16 +254,10 @@ void handleUsbMidiClockTicks() {
   }
 }
 
-void handleNoteOn(byte channel, byte pitch, byte velocity) {
-  debugln("note");
-}
 
-void midiClockStep() {
-  //debugln(midiClockCounter);
-  currentStep = (currentStep + 1) % GRIDSTEPS;
-  handleStep(currentStep);
-}
 
+unsigned long lastShow = 0;
+byte fastLEDUpdateCounter = 0;
 byte mode = overviewMode;
 void loop() {
   if (millis() - lastMidiClockReceivedTime > 1000) {  // is it more htan 1000ms since midi clock
@@ -314,11 +291,19 @@ void loop() {
   checkStepTimer();            // will also draw cursor
   checkAndHandleTimedNotes();  // Continually check and handle timed notes in the background
   handleI2CTimeout();
-  FastLED.show();
   MIDI.read();
   checkTimeOut();  // check i2c timeout
   checkUSBMidiTimout();
+
+  fastLEDUpdateCounter++;
+  fastLEDUpdateCounter = fastLEDUpdateCounter % 16; // this MASSIVELY inproves performance, %16 gives me approx 140FPS
+  if(fastLEDUpdateCounter == 0){
+    FastLED.show();
+    //debugln(millis() - lastShow); //FRAMERATE TESTING
+    //lastShow = millis();  //FRAMERATE TESTING
+  }
 }
+
 
 
 

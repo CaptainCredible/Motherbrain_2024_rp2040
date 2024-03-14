@@ -166,47 +166,6 @@ void recallSequenceFromEEPROM(int slot, int trackToLoad) {  // 8 LOADS ALL TRACK
   }
 }
 
-
-/*
-// Save the current instrument to a slot
-void saveSingleInstrumentToEEPROM(int slot, int instrumentToSave) {
-  if (slot >= 0 && slot < 4) {
-    uint32_t address = slot * (SEQUENCE_SIZE + 1) + 1;  // Start of the sequence data (after the flag)
-    address += currentInst * 16 * sizeof(uint32_t);     // Offset to the current instrument
-
-    for (int j = 0; j < 16; j++) {
-      EEPROM.put(address, seqMatrix[currentSeq][instrumentToSave][j]);
-      address += sizeof(uint32_t);
-    }
-    EEPROM.commit();
-    debug("saved instrument ");
-    debug(instrumentToSave);
-    debug(" to slot ");
-    debugln(slot);
-  } else {
-    // Handle error: Invalid slot number
-  }
-}
-
-// Load the current instrument from a slot
-void loadCurrentInstrumentFromEEPROM(int slot) {
-  if (slot >= 0 && slot < 4) {
-    uint32_t address = slot * (SEQUENCE_SIZE + 1) + 1;  // Start of the sequence data (after the flag)
-    address += currentInst * 16 * sizeof(uint32_t);     // Offset to the current instrument
-
-    for (int j = 0; j < 16; j++) {
-      uint32_t value;
-      EEPROM.get(address, value);
-      seqMatrix[currentSeq][currentInst][j] = value;
-      address += sizeof(uint32_t);
-    }
-  } else {
-    // Handle error: Invalid slot number
-  }
-}
-*/
-
-
 // to begin with, just read seqMatrix[0][0][0-15]
 
 bool getNote(byte sequence, byte instrument, byte step, byte note) {
@@ -373,6 +332,7 @@ void handleStep(byte stepToHandle) {
               currentInstCol[2] = trackColors[currentTrack][2];
               //addSparkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan*4);  // make that pixel sparkle for 500ms, also invert Y axis
               addSporkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], overviewColor[0], overviewColor[1], overviewColor[2], sparkleLifespan * 2);  // make that pixel sparkle for 500ms, also invert Y axis
+              addSparkle(15, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);
               alreadyTriggeredSparkleForThisTrack = true;
             }
           } else {
@@ -387,13 +347,13 @@ void handleStep(byte stepToHandle) {
 
 
 
-  debug("step ");
-  debug(currentStep);
+  //debug("step ");
+  //debug(currentStep);
   // for (byte i = 0; i < 8; i++) {
   //   debug(" - ");
   //   debug(tracksBuffer16x8[i]);
   // }
-  debugln();
+  //debugln();
   //tellUbitToAskForData();
   tracksBuffer16x8[8] = currentStep;  //slot number eight is where we send the current step number
   tracksBuffer16x8[9] = mutes;   //slot 9 is where the mutes are stored
@@ -410,8 +370,9 @@ void triggerMidiNote(byte noteToSend, byte channelToSend) {
 
 
 void clearTracksBuffer() {
-  for (int i = 0; i < 16; i++) {
+  for (int i = 0; i < 8; i++) {
     tracksBuffer16x8[i] = 0;
+    debugln("cleared buffer");
   }
 }
 
