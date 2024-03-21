@@ -1,5 +1,5 @@
 
-uint64_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 sequences, each row = an instrument, the bits in the number = the notes
+uint16_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 sequences, each row = an instrument, the bits in the number = the notes
   {
     // seq 1 2
     { 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0 },  // inst 1
@@ -158,7 +158,7 @@ void recallSequenceFromEEPROM(int slot, int trackToLoad) {  // 8 LOADS ALL TRACK
       debugln(slot);
     } else {
       debugln("wrong flag");
-      // Handle error: Invalid sequence flag, sequence not stored
+      // Handle error: Invalid sequence flag, sequence not storedf
     }
   } else {
     debugln("invalid slot number");
@@ -182,6 +182,19 @@ void drawStepState(uint8_t sequence, uint8_t instrument, uint8_t step) {
       setPixelXY(step, (GRIDROWS - 1) - i, currentInstCol[0], currentInstCol[1], currentInstCol[2]);  // assume i is the Y-coordinate here
     } else {
     }
+  }
+}
+
+unsigned long lastBlink = 0;
+int blinkDuration = 300;
+bool blinkState = false;
+void displayPageNoBlink() {
+  if (millis() - lastBlink > blinkDuration) {
+    blinkState = !blinkState;
+    lastBlink = millis();
+  }
+  if (blinkState) {
+    setPixelXY(currentSeq, 0, 100, 0, 0);  // HERE!!!!
   }
 }
 
@@ -345,16 +358,6 @@ void handleStep(byte stepToHandle) {
     }
   }
 
-
-
-  //debug("step ");
-  //debug(currentStep);
-  // for (byte i = 0; i < 8; i++) {
-  //   debug(" - ");
-  //   debug(tracksBuffer16x8[i]);
-  // }
-  //debugln();
-  //tellUbitToAskForData();
   tracksBuffer16x8[8] = currentStep;  //slot number eight is where we send the current step number
   tracksBuffer16x8[9] = mutes;   //slot 9 is where the mutes are stored
   sendTracksBuffer();
@@ -369,37 +372,7 @@ void triggerMidiNote(byte noteToSend, byte channelToSend) {
 }
 
 
-void clearTracksBuffer() {
-  for (int i = 0; i < 8; i++) {
-    tracksBuffer16x8[i] = 0;
-    debugln("cleared buffer");
-  }
-}
 
 void radioSendClockTick() {
   //sendWire2microBitTrackAndNote(101, 0);			//send that note to microbit (ask microbit to request it.
 }
-
-
-
-/*
-//LEGACY///
-void pushNotesToBeEnded(int value) {
-  if (top < maxSize - 1) {
-    top++;                 // Increment the top of the stack
-    myStack[top] = value;  // Push the value onto the stack
-  } else {
-  }
-}
-
-int popNotesToBeEnded() {
-  if (top >= 0) {
-    int poppedValue = myStack[top];  // Get the top value
-    top--;                           // Decrement the top of the stack
-    return poppedValue;
-  } else {
-    // Stack is empty, handle the error
-    return -1; // You can choose another value to indicate an error
-  }
-}
-*/

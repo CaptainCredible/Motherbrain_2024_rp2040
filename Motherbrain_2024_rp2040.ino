@@ -1,10 +1,15 @@
-
+//done to try to fix crashes:
+/*
+  turned off all functions besides midi.read and interrupts - still crashes
+  // find out where it crashes: Turns out it usually crashes whil in the "scanGrid()" function, but thats also the unction that takes the most time.
+*/
 
 #define DEBUG_ENABLED true
 
 #if DEBUG_ENABLED
 #define debug(x) Serial.print(x)
 #define debugln(x) Serial.println(x)
+
 #else
 #define debug(x)
 #define debugln(x)
@@ -23,8 +28,8 @@
 
 
 int sparkleLifespan = 200;
-uint16_t tracksBuffer16x8[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };      //tracks 0 - 8 then currentstep then mutes
-uint16_t midiTracksBuffer16x8[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  //last one used for currentStep, so receivers need to be able to determine that we are not setting step number!
+volatile uint16_t tracksBuffer16x8[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };      //tracks 0 - 8 then currentstep then mutes
+volatile uint16_t midiTracksBuffer16x8[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  //last one used for currentStep, so receivers need to be able to determine that we are not setting step number!
 //uint8_t isMutedByte = 0b00000000;
 bool isMuted[8] = { false, false, false, false, false, false, false, false };
 bool isPoly[8] = { true, true, true, true, true, true, true, true };
@@ -52,11 +57,8 @@ byte fadedTrackColors[8][3] = {
   { 128, 0, 0 }      // Red
 };
 
-//averaging for pot
-#define NUM_READINGS 30      // Number of readings to average
-int readings[NUM_READINGS];  // Array to store the last n readings
-int readIndex = 0;           // Index of current reading
-int total = 0;               // Running total of readings
+
+
 int tempo = 120;
 int oldTempo = 0;
 
@@ -66,14 +68,14 @@ Adafruit_USBD_MIDI usb_midi;
 
 
 //seq related
-int currentStep = -1;
+byte solos = 0b00000000;
+uint16_t mutes = 0b00000000;
+volatile int currentStep = -1;
 byte currentSeq = 0;
 byte currentInst = 0;
 bool playing = false;
 unsigned int tempoMillis = 100;
 uint16_t numberToDisplay = 0;
-byte solos = 0b00000000;
-uint16_t mutes = 0b00000000;
 int viewOffset = 0;
 byte maxViewOffset = 7;
 
@@ -81,7 +83,7 @@ byte maxViewOffset = 7;
 byte cycle = 0;
 byte testColor = 255;
 int textDisplayTimeout = 500;  //500 ms from text is displayed until it dissappears
-int textDisplayStartTime = 0;
+int textDisplayStartTime = 0; //to store the time the text started displaying
 byte currentInstCol[3] = { 0, 255, 0 };
 
 // Create a new instance of the Arduino MIDI Library,
@@ -110,7 +112,7 @@ unsigned long swDebounceTime = 5;
 int swState = 0;
 
 //i2c
-const byte interruptPin = 22;
+const byte interruptPin = 22; //pin to interrupt uBit
 
 //buttons
 byte playPausePin = 10;
@@ -145,10 +147,19 @@ void initLedGridState() {
   }
 }
 
+unsigned long debugTimer;
+void debugTimerStart() {
+  debugTimer = micros();
+}
+
+void debugTimerEnd() {
+  debugTimer = micros() - debugTimer;
+  debugln(debugTimer);
+}
+
 byte SHIFTPIN = 8;
 byte UTILPIN = 9;
 byte PLAYPAUSEPIN = 10;
-//byte KNOBPIN = A0;
 
 volatile int rotaryVal = 0;
 byte lastEncoded = 0;
@@ -158,19 +169,15 @@ byte lastEncoded = 0;
 #define SEQUENCE_FLAG 123
 
 void setup() {
+  //FAKE EEPROM IN FLASH
+  EEPROM.begin(EEPROM_SIZE);
+
   //wire
   Wire1.setSDA(14);
   Wire1.setSCL(15);
-  Wire1.begin(8);  // do i need an argument, address??
-  //Wire1.onRequest(req);
+  Wire1.begin(8);  //address = 8
   Wire1.onRequest(requestEvent);
-  EEPROM.begin(EEPROM_SIZE);
-  //init averaging:
-  for (int i = 0; i < NUM_READINGS; i++) {
-    readings[i] = 0;
-  }
 
-  //pinMode(KNOBPIN, INPUT);
   pinMode(SHIFTPIN, INPUT_PULLUP);
   pinMode(PLAYPAUSEPIN, INPUT_PULLUP);
   pinMode(UTILPIN, INPUT_PULLUP);
@@ -190,14 +197,16 @@ void setup() {
 
 //MIDI
 #if defined(ARDUINO_ARCH_MBED) && defined(ARDUINO_ARCH_RP2040)
-  // Manual begin() is required on core without built-in support for TinyUSB such as mbed rp2040
   TinyUSB_Device_Init(0);
 #endif
+  //usb_midi.setStringDescriptor("mthr");
+
   MIDI.begin(MIDI_CHANNEL_OMNI);
+  MIDI.turnThruOff();
   MIDI.setHandleClock(handleUsbMidiClockTicks);
-  MIDI.setHandleNoteOn(preHandleUSBNoteOn);
-	MIDI.setHandleNoteOff(HandleUsbNoteOff);
-  
+  MIDI.setHandleNoteOn(HandleUsbNoteOn);
+  MIDI.setHandleNoteOff(HandleUsbNoteOff);
+
   //GRID
   setupGridPins();  //setup pins for buttonGrid
   //pixels.begin();   // INITIALIZE NeoPixel strip object (REQUIRED)
@@ -207,9 +216,6 @@ void setup() {
   //delay(1000); // needed?
   testSetXY(100);
 
-  //wait for mount
-  //while( !TinyUSBDevice.mounted()) delay(1);  //this means it wont finish booting if not connected to poooooter
-  // rewrote it with timeout
   unsigned long startTime = millis();  // Capture start time
   while (!TinyUSBDevice.mounted()) {
     delay(1);                           // Wait for 1 millisecond
@@ -238,7 +244,7 @@ void setup() {
 }
 
 bool runClock = true;  //run internal clock
-bool midiClockRunning = false;
+bool midiClockRunning = false; //the MIDI clock is running, this is unnessecary, tghe runClock variable should mirror this
 unsigned long lastMidiClockReceivedTime = 0;  //how long since last time we received a midi clock
 int midiClockDiv = 6;
 byte midiClockCounter = 5;
@@ -259,11 +265,13 @@ void handleUsbMidiClockTicks() {
 unsigned long lastShow = 0;
 byte fastLEDUpdateCounter = 0;
 byte mode = overviewMode;
-void loop() {
+void loop() { // the whole loop uses max 1040us, idles at 400 for cucles without FastLED.show(), and 500 for cucles with FastLED.show()
+  FastLED.clear();
+
   if (millis() - lastMidiClockReceivedTime > 1000) {  // is it more htan 1000ms since midi clock
     midiClockRunning = false;
   }
-  //handleRotary(); //handled by interrupt
+
   handleRotaryPush();
   if (tempo != oldTempo) {
     tempoMillis = tempoToMillis(tempo);
@@ -272,35 +280,45 @@ void loop() {
     oldTempo = tempo;
   }
 
-  scanGrid();  //scan the grid
-  scanButtsNKnobs();
-  FastLED.clear();
+  scanGrid();  //scan the grid TAKES 335 microseconds
+
+  scanButtsNKnobs();  // takes 2 microseconds
+  
   switch (mode) {
     case instSeqMode:
-      handleInstSeqMode();
+      handleInstSeqMode();  //not responsible for crashes 40 - 150 us
       break;
     case overviewMode:
-      handleOverviewMode();
+      handleOverviewMode();  //not responsible for crashes 100 - 150 us
       break;
   }
-  displayPageNoBlink();
-  updateSparkles();
+  
+  displayPageNoBlink();  // 3us
+  
+  updateSparkles();  // not responsible, 340us
+  
   if (millis() < textDisplayStartTime + textDisplayTimeout) {
     displayNumber(numberToDisplay, 4, 3);
   }
-  checkStepTimer();            // will also draw cursor
-  checkAndHandleTimedNotes();  // Continually check and handle timed notes in the background
-  handleI2CTimeout();
+  
+  checkStepTimer();  // will also draw cursor 2us
+  
+  checkAndHandleTimedNotes();  // usually 8us occasionally as high as 117us //check this in detail
+  
+  handleI2CTimeout(); //2us
+  
+  checkUSBMidiTimout(); // 2us idle, 20us with many notes
+  
   MIDI.read();
-  checkTimeOut();  // check i2c timeout
-  checkUSBMidiTimout();
+  /*
+  while (MIDI.read()) {  //2us idle, 50 - 150 for a note, 33 - 60 for a midi clock
+  }
+  */
 
   fastLEDUpdateCounter++;
-  fastLEDUpdateCounter = fastLEDUpdateCounter % 16; // this MASSIVELY inproves performance, %16 gives me approx 140FPS
-  if(fastLEDUpdateCounter == 0){
-    FastLED.show();
-    //debugln(millis() - lastShow); //FRAMERATE TESTING
-    //lastShow = millis();  //FRAMERATE TESTING
+  fastLEDUpdateCounter = fastLEDUpdateCounter % 16;  // this MASSIVELY inproves performance, %16 gives me approx 140FPS
+  if (fastLEDUpdateCounter == 0) {
+    FastLED.show(); //175us
   }
 }
 
@@ -319,19 +337,6 @@ void handleOverviewMode() {
         crossHair(row, col);
       }
     }
-  }
-}
-
-unsigned long lastBlink = 0;
-int blinkDuration = 300;
-bool blinkState = false;
-void displayPageNoBlink() {
-  if (millis() - lastBlink > blinkDuration) {
-    blinkState = !blinkState;
-    lastBlink = millis();
-  }
-  if (blinkState) {
-    setPixelXY(currentSeq, 0, 100, 0, 0);  // HERE!!!!
   }
 }
 
@@ -410,8 +415,7 @@ bool readBit(T input, byte bit) {
   if (bit >= 0 && bit < numBits) {
     return (input & (T(1) << bit)) != 0;
   } else {
-    // Bit position is out of range
-    return false;
+    return false;  // Bit position is out of range
   }
 }
 
@@ -429,5 +433,5 @@ void toggleSolo(byte trackNumber) {
       mutes = setBit(mutes, i, true);
     }
   }
-  Serial.println(mutes, BIN);
+  //Serial.println(mutes, BIN);
 }

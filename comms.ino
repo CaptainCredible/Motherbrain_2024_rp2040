@@ -1,23 +1,31 @@
-unsigned int i2cFails = 0;
-unsigned long MIDItimeOutDeadline = 0; // to store the deadline for midi message
+// I THINK ITS i2C related, or its just TinyUSB MIDI related. 
+//should i just add midi notes to the existing tracksBuffer?
 
-bool waitingForMIDITimeOut = false;  // are we waiting for more midi notes to come in?
-unsigned long i2cTimeout = 0;
+/*
+Experiments:
+TODO:
+- veryfy that the code groups together midi notes before sending
+- check interrupt pin with oscilloscope to see if we crash during an attempt to send i2c
+
+DONE: 
+If i send no midi notes it can sync to midi clock at 999BPM and handle many notes per step for a while before crashing.
+*/
+
+volatile unsigned long MIDItimeOutDeadline = 0;  // to store the deadline for midi message
+volatile bool waitingForMIDITimeOut = false;  // are we waiting for more midi notes to come in?
+volatile unsigned long i2cTimeout = 0;
 byte i2cTimeoutDuration = 20;
-bool isTimedOut = false;
-
-// INTERRUPT uBit //
-void handleI2CTimeout() {
-  if (millis() - i2cTimeout > i2cTimeoutDuration && isTimedOut == false) {
-    digitalWrite(interruptPin, HIGH);
-    i2cTimeout == millis();
-    isTimedOut = true;
-  }
-}
+volatile bool isTimedOut = false;
+volatile bool sentAMidiBuffer = false;
 
 // COMMS I2C
-bool isSending = false;
+volatile bool isSending = false;
 void sendTracksBuffer() {
+  interruptUbit();
+}
+
+void interruptUbit() {
+  debugln("intteruptUbit()");
   if (!isSending) {
     isSending = true;
     digitalWrite(interruptPin, LOW);  //start by telling microbit to request track
@@ -26,38 +34,51 @@ void sendTracksBuffer() {
   }
 }
 
-#define timeOutDuration 10
-void checkTimeOut() {  //check i2c timeout
-  if (millis() - i2cTimeout > timeOutDuration && isSending) {
+void requestEvent() {  //this is what happens when the microbit asks for a message
+  debug("requestEvent() ");
+  if (sentAMidiBuffer) {  //this used to be only midi buffer, but is also used by other functions that need to send immediately
+    debugln("sent midiBuffer");
+    I2C_writeAnything(midiTracksBuffer16x8);
+    clearMidiTracksBuffer();
+  } else {
+    I2C_writeAnything(tracksBuffer16x8);
+    debug("sent tracksBuffer ");
+    debugln(currentStep);
+  }
+  isSending = false;
+  digitalWrite(interruptPin, HIGH);
+  isTimedOut = true;
+}
+
+// INTERRUPT uBit //
+void handleI2CTimeout() {
+  if (millis() - i2cTimeout > i2cTimeoutDuration && isTimedOut == false) {
+    debugln("handleI2cTimeout()");
     digitalWrite(interruptPin, HIGH);
+    i2cTimeout == millis();
+    isTimedOut = true;
     isSending = false;
-    Serial.println(" i2c TIMEOUT! ");
-    i2cFails++;
   }
 }
 
 //MIDI COMMS
-void preHandleUSBNoteOn(byte inChannel, byte inNumber, byte inVelocity) {
-  if (inVelocity > 0) {
-    HandleUsbNoteOn(inNumber, inVelocity, inChannel);
-  } else {
-    HandleUsbNoteOff(inNumber, inVelocity, inChannel);
-  }
-};
-
-int USBReceiveTimeOutThresh = 4; //timeframe to wait for midi notes
-void HandleUsbNoteOn(byte note, byte velocity, byte channel) {
-  if (channel < 9) {
-    MIDItimeOutDeadline = millis() + USBReceiveTimeOutThresh;  //start the timer
-    waitingForMIDITimeOut = true;
-    //debug("MIDI CHANNEL: ");
-    //debug(channel);
-    if (isPoly[channel]) {                                // if this midi channel corresponds to a polyphonic orchestra channel
-      if (note < 16) {                                    //make sure we dont overflow
-        bitSet(midiTracksBuffer16x8[channel - 1], note);  //set corresponding bit in corresponding int in the buffer to be sent
-        addSparkle(15, channel - 1, trackColors[channel - 1][0], trackColors[channel - 1][1], trackColors[channel - 1][2], sparkleLifespan);
+unsigned long lastMIDIMessageTime = 0;
+int USBReceiveTimeOutThresh = 5;  //timeframe to wait for midi notes
+void HandleUsbNoteOn(byte channel, byte note, byte velocity) {
+  debugln("handleUSBNoteOn()");
+  if (velocity > 0) {
+    if (channel < 9) {
+      lastMIDIMessageTime = millis();  //start the timer
+      waitingForMIDITimeOut = true;
+      if (isPoly[channel]) {                                // if this midi channel corresponds to a polyphonic orchestra channel
+        if (note < 16) {                                    //make sure we dont overflow
+          bitSet(midiTracksBuffer16x8[channel - 1], note);  //set corresponding bit in corresponding uint16_t in the buffer to be sent
+          addSparkle(15, channel - 1, trackColors[channel - 1][0], trackColors[channel - 1][1], trackColors[channel - 1][2], sparkleLifespan);
+        }
       }
-    } else {  //if this midi channel is controlling a monophonic (127 note) orchestra channel
+      /*
+    //MONO TRACK CODE:
+    else {  //if this midi channel is controlling a monophonic (127 note) orchestra channel
       if (channel == 8) {  //these are high bits on ints 6 and 7 in the buffer
         midiTracksBuffer16x8[channel - 1] = midiTracksBuffer16x8[channel - 1] & 0b0000000011111111;  // use bitmask to clear any previous values held in the most significant bits, leaving LSB alone
         midiTracksBuffer16x8[channel - 1] = midiTracksBuffer16x8[channel - 1] | (note << 8);         //shift note value left by 8 and compound (logical or) it to the rest
@@ -66,24 +87,55 @@ void HandleUsbNoteOn(byte note, byte velocity, byte channel) {
         midiTracksBuffer16x8[channel] = midiTracksBuffer16x8[channel] | note;                        // compound (logical or) the int in the buffer with the note we want to add
       }
     }
+    */
+    }
   }
 }
 
-bool sentAMidiBuffer = false;
-void sendUsbMidiPackage() {
-  midiTracksBuffer16x8[8] = 200;  //200 shall be the magic number
-  sentAMidiBuffer = true;         //flag the fact that we are sending midi buffer
-  sendTracksBuffer();
+unsigned long idleTimer = 0;
+void checkUSBMidiTimout() {
+  uint16_t timeSinceMIDIMessage = millis() - lastMIDIMessageTime;
+  if (waitingForMIDITimeOut) {             //if we are waiting to see if there are any more messages for this step
+    debugln(timeSinceMIDIMessage);
+    if (timeSinceMIDIMessage>USBReceiveTimeOutThresh) {  //if we timed out
+      waitingForMIDITimeOut = false;
+      debugln("usbmidi Timed Out");
+      sendUsbMidiPackage();
+      idleTimer = millis();
+    }
+  } else {
+    //debug("idle");
+    //debugln(millis() - idleTimer);
+  }
 }
 
-void clearMidiTracksBuffer() {    //also sets sentAMidiBuffer to false
+void sendUsbMidiPackage() {
+  debugln("sendUSBMidiPackage()");
+  if (!isSending) {
+    midiTracksBuffer16x8[8] = 200;  //200 shall be the magic number
+    sentAMidiBuffer = true;         //flag the fact that we are sending midi buffer
+    interruptUbit();
+  }
+}
+
+void clearTracksBuffer() {
+  for (int i = 0; i < 8; i++) {
+    tracksBuffer16x8[i] = 0;
+    debugln("cleared buffer");
+  }
+}
+
+void clearMidiTracksBuffer() {  //also sets sentAMidiBuffer to false
+  debugln("clearMidiTracksBuffer()");
+  debugln();
   for (byte i = 0; i < 8; i++) {  //for every channel entry in buffer
     midiTracksBuffer16x8[i] = 0;  // clear buffer
   }
   sentAMidiBuffer = false;  //set flag back to normal buffers.
 }
 
-void hijackUSBMidiTrackBuffer(byte val, byte slot) { // to use for preview buttons
+void hijackUSBMidiTrackBuffer(byte val, byte slot) {  // to use for preview buttons
+  debugln("hijackMidiTracksBuffer");
   if (!waitingForMIDITimeOut) {
     clearMidiTracksBuffer();
     bitSet(midiTracksBuffer16x8[slot], val);  //set corresponding bit in corresponding int in the buffer to be sent
@@ -91,25 +143,12 @@ void hijackUSBMidiTrackBuffer(byte val, byte slot) { // to use for preview butto
   }
 }
 
-
-void checkUSBMidiTimout() {
-  if (waitingForMIDITimeOut) {             //if we are waiting to see if there are any more messages for this step
-    if (millis() > MIDItimeOutDeadline) {  //if we timed out
-      sendUsbMidiPackage();
-      waitingForMIDITimeOut = false;
-      //debug("SEND MIDItimeOutDeadline was ");
-      //debugln(MIDItimeOutDeadline);
-    }
-  }
-}
-
 void HandleUsbNoteOff(byte note, byte velocity, byte channel) {
 }
 
 void midiClockStep() {
-  currentStep = (currentStep + 1) % GRIDSTEPS;
-  //debugln(currentStep);
-  handleStep(currentStep);
+  //currentStep = (currentStep + 1) % GRIDSTEPS;
+  //handleStep(currentStep);
 }
 
 void debugTracksBuffer() {
@@ -123,22 +162,22 @@ void debugTracksBuffer() {
 
 void debugMidiTracksBuffer() {
   debug("midiTracksBuffer = ");
-  for (int i = 0; i < 10; i++) {
-    Serial.print(midiTracksBuffer16x8[i], BIN);
-    debug(" ");
-  }
+  printAsBinary(midiTracksBuffer16x8, 10);
 }
 
-
-void requestEvent() {     //this is what happens when the microbit asks for a message
-  if (sentAMidiBuffer) {  //this used to be only midi buffer, but is also used by other functions that need to send immediately
-    I2C_writeAnything(midiTracksBuffer16x8);
-  } else {
-    I2C_writeAnything(tracksBuffer16x8);
+void printAsBinary(volatile uint16_t *array, size_t size) {
+  for (size_t i = 0; i < size; ++i) {
+    uint16_t number = array[i];
+    for (int bit = 15; bit >= 0; --bit) {
+      if (number & (1 << bit)) {
+        debug("1");
+      } else {
+        debug("0");
+      }
+    }
+    if (i < size - 1) {
+      debug(" ");
+    }
   }
-  isSending = false;
-  digitalWrite(interruptPin, HIGH);
-  if (sentAMidiBuffer) {      //if we sent a midi buffer
-    clearMidiTracksBuffer();  //also sets sent a midi buffer to false
-  }
+  debugln();
 }
