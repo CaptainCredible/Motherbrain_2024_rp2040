@@ -1,13 +1,19 @@
-// I THINK ITS i2C related, or its just TinyUSB MIDI related. 
+
+
+ 
 //should i just add midi notes to the existing tracksBuffer?
 
 /*
 Experiments:
 TODO:
+test following midi clock with notes in seq but disable USB MIDI note out!
 - veryfy that the code groups together midi notes before sending
 - check interrupt pin with oscilloscope to see if we crash during an attempt to send i2c
 
 DONE: 
+NO CRASH following MIDI clock with no notes in seq abnd no notes being sent from computer
+Removed all Serial.xxx and only sending midi notes works fine at 999 BPM
+NO CRASH IF NO USB HOST (powerd from charger E.G.)
 If i send no midi notes it can sync to midi clock at 999BPM and handle many notes per step for a while before crashing.
 */
 
@@ -53,7 +59,7 @@ void requestEvent() {  //this is what happens when the microbit asks for a messa
 // INTERRUPT uBit //
 void handleI2CTimeout() {
   if (millis() - i2cTimeout > i2cTimeoutDuration && isTimedOut == false) {
-    debugln("handleI2cTimeout()");
+    //debugln("handleI2cTimeout()");
     digitalWrite(interruptPin, HIGH);
     i2cTimeout == millis();
     isTimedOut = true;
@@ -147,8 +153,8 @@ void HandleUsbNoteOff(byte note, byte velocity, byte channel) {
 }
 
 void midiClockStep() {
-  //currentStep = (currentStep + 1) % GRIDSTEPS;
-  //handleStep(currentStep);
+  currentStep = (currentStep + 1) % GRIDSTEPS;
+  //
 }
 
 void debugTracksBuffer() {

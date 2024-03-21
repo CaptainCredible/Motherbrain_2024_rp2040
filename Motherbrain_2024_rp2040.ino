@@ -3,9 +3,8 @@
   turned off all functions besides midi.read and interrupts - still crashes
   // find out where it crashes: Turns out it usually crashes whil in the "scanGrid()" function, but thats also the unction that takes the most time.
 */
-
-#define DEBUG_ENABLED true
-
+//#define FASTLED_RP2040_CLOCKLESS_PIO //gives me error: #if with no expression 7 | #if FASTLED_RP2040_CLOCKLESS_PIO
+#define DEBUG_ENABLED false
 #if DEBUG_ENABLED
 #define debug(x) Serial.print(x)
 #define debugln(x) Serial.println(x)
@@ -26,11 +25,9 @@
 #define instSeqMode 1
 #define ALLTRACKS 8
 
-
 int sparkleLifespan = 200;
 volatile uint16_t tracksBuffer16x8[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };      //tracks 0 - 8 then currentstep then mutes
 volatile uint16_t midiTracksBuffer16x8[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  //last one used for currentStep, so receivers need to be able to determine that we are not setting step number!
-//uint8_t isMutedByte = 0b00000000;
 bool isMuted[8] = { false, false, false, false, false, false, false, false };
 bool isPoly[8] = { true, true, true, true, true, true, true, true };
 
@@ -303,6 +300,7 @@ void loop() { // the whole loop uses max 1040us, idles at 400 for cucles without
   
   checkStepTimer();  // will also draw cursor 2us
   
+
   checkAndHandleTimedNotes();  // usually 8us occasionally as high as 117us //check this in detail
   
   handleI2CTimeout(); //2us
@@ -360,7 +358,7 @@ void handleInstSeqMode() {
   }
 }
 
-
+int lastHandledStep = -2;
 void checkStepTimer() {
   unsigned long nowTime = millis();
   if (nowTime >= lastStepTime + tempoMillis) {           // if we reached the end of the step
@@ -369,8 +367,11 @@ void checkStepTimer() {
     lastStepTime = millis() - diff;                      //compensate for overshoot
     if (playing) {
       currentStep = (currentStep + 1) % GRIDSTEPS;
-      handleStep(currentStep);
     }
+  }
+  if(currentStep != lastHandledStep){
+    handleStep(currentStep);
+    lastHandledStep = currentStep;
   }
 }
 

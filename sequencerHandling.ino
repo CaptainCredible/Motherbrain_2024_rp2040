@@ -318,7 +318,6 @@ void checkAndHandleTimedNotes() {
 // HANDLE STEP //
 
 void handleStep(byte stepToHandle) {
-
   bool tracksBufferIsEmpty = true;
   // handle notes THIS ONLY ACTUALLY SCANS THE CURRENTLY VIEWED INSTRUMENT!!!
   byte maxNotes = 16;  //our datastructure actually allows 64bit steps but microbitOrchestra currently only likes 16bit
@@ -366,8 +365,8 @@ void handleStep(byte stepToHandle) {
 void triggerMidiNote(byte noteToSend, byte channelToSend) {
   if (numActiveNotes < maxTimedNotes) {
     byte midiNote = noteToSend + 60;
-    MIDI.sendNoteOn(midiNote, 127, channelToSend);
-    addTimedNote(midiNote, 50, channelToSend);  // Assuming 50ms is the duration for each note
+    MIDI.sendNoteOn(midiNote, 127, channelToSend); // TRY COMMENTING OUT THIS!!!
+    addTimedNote(midiNote, 50, channelToSend);  // Assuming 50ms is the duration for each note ALSO TRY TO REMOVE THIS AS TEST???
   }
 }
 
