@@ -152,6 +152,8 @@ void hijackUSBMidiTrackBuffer(byte val, byte slot) {  // to use for preview butt
 void HandleUsbNoteOff(byte note, byte velocity, byte channel) {
 }
 
+
+
 void midiClockStep() {
   currentStep = (currentStep + 1) % GRIDSTEPS;
   //

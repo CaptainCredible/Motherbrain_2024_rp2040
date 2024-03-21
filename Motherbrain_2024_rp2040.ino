@@ -1,7 +1,10 @@
 //done to try to fix crashes:
 /*
-  turned off all functions besides midi.read and interrupts - still crashes
-  // find out where it crashes: Turns out it usually crashes whil in the "scanGrid()" function, but thats also the unction that takes the most time.
+
+    IT CRASHES IF IT SENDS AND RECEIVES OVER USB.
+    IF IT ONLY SENDS, IT'S FINE.
+    IF IT ONLY RECEIVES, IT'S FINE
+
 */
 //#define FASTLED_RP2040_CLOCKLESS_PIO //gives me error: #if with no expression 7 | #if FASTLED_RP2040_CLOCKLESS_PIO
 #define DEBUG_ENABLED false
@@ -307,11 +310,14 @@ void loop() { // the whole loop uses max 1040us, idles at 400 for cucles without
   
   checkUSBMidiTimout(); // 2us idle, 20us with many notes
   
-  MIDI.read();
-  /*
+  //MIDI.read();
+  
   while (MIDI.read()) {  //2us idle, 50 - 150 for a note, 33 - 60 for a midi clock
   }
-  */
+  
+  if(midiClockRunning){
+    setPixelXY(0, 7, 100, 0, 0);  // HERE!!!!
+  }
 
   fastLEDUpdateCounter++;
   fastLEDUpdateCounter = fastLEDUpdateCounter % 16;  // this MASSIVELY inproves performance, %16 gives me approx 140FPS

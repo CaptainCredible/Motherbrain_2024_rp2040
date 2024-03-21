@@ -365,8 +365,10 @@ void handleStep(byte stepToHandle) {
 void triggerMidiNote(byte noteToSend, byte channelToSend) {
   if (numActiveNotes < maxTimedNotes) {
     byte midiNote = noteToSend + 60;
-    MIDI.sendNoteOn(midiNote, 127, channelToSend); // TRY COMMENTING OUT THIS!!!
-    addTimedNote(midiNote, 50, channelToSend);  // Assuming 50ms is the duration for each note ALSO TRY TO REMOVE THIS AS TEST???
+    if(!midiClockRunning){
+      MIDI.sendNoteOn(midiNote, 127, channelToSend); // TRY COMMENTING OUT THIS!!!
+      addTimedNote(midiNote, 50, channelToSend);  // Assuming 50ms is the duration for each note ALSO TRY TO REMOVE THIS AS TEST???
+    }
   }
 }
 
