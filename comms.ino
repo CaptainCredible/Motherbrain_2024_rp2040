@@ -1,21 +1,8 @@
 
 
  
-//should i just add midi notes to the existing tracksBuffer?
+//should I just add midi notes to the existing tracksBuffer?
 
-/*
-Experiments:
-TODO:
-test following midi clock with notes in seq but disable USB MIDI note out!
-- veryfy that the code groups together midi notes before sending
-- check interrupt pin with oscilloscope to see if we crash during an attempt to send i2c
-
-DONE: 
-NO CRASH following MIDI clock with no notes in seq abnd no notes being sent from computer
-Removed all Serial.xxx and only sending midi notes works fine at 999 BPM
-NO CRASH IF NO USB HOST (powerd from charger E.G.)
-If i send no midi notes it can sync to midi clock at 999BPM and handle many notes per step for a while before crashing.
-*/
 
 volatile unsigned long MIDItimeOutDeadline = 0;  // to store the deadline for midi message
 volatile bool waitingForMIDITimeOut = false;  // are we waiting for more midi notes to come in?
@@ -107,7 +94,7 @@ void checkUSBMidiTimout() {
       waitingForMIDITimeOut = false;
       debugln("usbmidi Timed Out");
       sendUsbMidiPackage();
-      idleTimer = millis();
+      //idleTimer = millis();
     }
   } else {
     //debug("idle");
@@ -151,8 +138,6 @@ void hijackUSBMidiTrackBuffer(byte val, byte slot) {  // to use for preview butt
 
 void HandleUsbNoteOff(byte note, byte velocity, byte channel) {
 }
-
-
 
 void midiClockStep() {
   currentStep = (currentStep + 1) % GRIDSTEPS;

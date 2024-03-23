@@ -101,7 +101,19 @@ void instSeqModeButts(byte x, byte y) {
       case 14:  //mute
         break;
 
-      case 15:  //sel
+      case 15:  //sel / trig
+
+        addSporkle(15, y, 200, 200, 200, 0, 0, 0, 500);
+        addSporkle(14, y, 100, 100, 100, 0, 0, 0, 500);
+        addSporkle(13, y, 30, 30, 30, 0, 0, 0, 500);
+        addSporkle(12, y, 5, 5, 5, 0, 0, 0, 500);
+
+        triggerMidiNote((7-y) + viewOffset, currentInst + 1);
+        bitSet(midiTracksBuffer16x8[currentInst - 1], (7-y) + viewOffset);  //set corresponding bit in corresponding uint16_t in the buffer to be sent
+        waitingForMIDITimeOut = false;
+        debugln("usbmidi Timed Out");
+        sendUsbMidiPackage();
+
         break;
     }
   } else {  // if shift is not held in
@@ -156,11 +168,10 @@ void overviewModeButts(byte x, byte y) {
           debugln("SAVE BITCH!");
           if (utilState) {
             saveCurrentSequenceToEEPROM(slotSelect, ALLTRACKS);  //save instrument "y" to slot "x" (saveselect)
-            for(byte i = 0; i<4; i++){
-              for(byte j = 0; j<8; j++){
+            for (byte i = 0; i < 4; i++) {
+              for (byte j = 0; j < 8; j++) {
                 addSporkle(i, j, 40, 0, 0, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
               }
-              
             }
           } else {
             saveCurrentSequenceToEEPROM(slotSelect, trackSelect);  //save instrument "y" to slot "x" (saveselect)
@@ -188,11 +199,10 @@ void overviewModeButts(byte x, byte y) {
 
           } else {
             recallSequenceFromEEPROM(slotSelect, ALLTRACKS);
-            for(byte i = 0; i<4; i++){
-              for(byte j = 0; j<8; j++){
+            for (byte i = 0; i < 4; i++) {
+              for (byte j = 0; j < 8; j++) {
                 addSporkle(i, j, 0, 20, 20, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
               }
-              
             }
           }
         }
@@ -328,7 +338,11 @@ void scanButtsNKnobs() {
     if (playButtonState) {  // when button goes from off to on
       //check if we are under midi clock:
       if (!midiClockRunning) {
-        playing = !playing;
+        if (!shiftState) {
+          playing = !playing;
+        } else {
+          playing = true;
+        }
         if (!playing) {
           currentStep = -1;
         } else if (playing) {
@@ -380,6 +394,10 @@ void handleRotaryPush() {  //rotaryclick
   swState = digitalRead(swPin);
   if (swState != swLastState) {
     if (millis() > lastSwTime + swDebounceTime) {
+      rotaryPushState = !swState;
+      if(rotaryPushState){
+
+      }
       debugln(swState);
       lastSwTime = millis();
     }
@@ -427,14 +445,12 @@ void drawRotaryMasterCounterOverSerial() {
 }
 
 void rotaryMove(int moveAmount) {
-  if (mode == overviewMode && utilState) {
-    tempo = tempo + moveAmount * 10;
-  }
-
-  if (shiftState) {
-    tempo = tempo + moveAmount;
-    debug("tempo ");
-    debugln(tempo);
+  if(shiftState){
+    if(rotaryPushState){
+      tempo = tempo + moveAmount;
+    } else {
+      tempo = tempo + moveAmount * 10;
+    }
   } else {
     viewOffset += moveAmount;
     if (viewOffset > maxViewOffset) viewOffset = maxViewOffset;

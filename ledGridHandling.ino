@@ -286,8 +286,7 @@ void displayNumber(int number, int xPos, int yPos) {
         dimShiftPixelXY(currentX, currentY + height, 3);
       }
     }
-
-
+    
     //DIGIT display
     for (int i = 0; i < 5; i++) {
       for (int j = 0; j < 4; j++) {

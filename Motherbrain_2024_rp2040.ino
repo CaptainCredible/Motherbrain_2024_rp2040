@@ -1,4 +1,4 @@
-//done to try to fix crashes:
+
 /*
 
     IT CRASHES IF IT SENDS AND RECEIVES OVER USB.
@@ -6,6 +6,17 @@
     IF IT ONLY RECEIVES, IT'S FINE
 
 */
+
+/*
+
+things to add:
+
+  - Hardware MIDI out
+  - Randomize
+  - 
+
+*/
+
 //#define FASTLED_RP2040_CLOCKLESS_PIO //gives me error: #if with no expression 7 | #if FASTLED_RP2040_CLOCKLESS_PIO
 #define DEBUG_ENABLED false
 #if DEBUG_ENABLED
@@ -33,6 +44,8 @@ volatile uint16_t tracksBuffer16x8[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };      
 volatile uint16_t midiTracksBuffer16x8[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  //last one used for currentStep, so receivers need to be able to determine that we are not setting step number!
 bool isMuted[8] = { false, false, false, false, false, false, false, false };
 bool isPoly[8] = { true, true, true, true, true, true, true, true };
+
+bool rotaryPushState = false;
 
 //trackColours:
 byte trackColors[8][3] = {
@@ -212,7 +225,7 @@ void setup() {
   //pixels.begin();   // INITIALIZE NeoPixel strip object (REQUIRED)
   FastLED.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);  // INITIALIZE NeoPixel strip object (REQUIRED)
   initLedGridState();
-  FastLED.show();
+  //FastLED.show(); 
   //delay(1000); // needed?
   testSetXY(100);
 
@@ -315,8 +328,9 @@ void loop() { // the whole loop uses max 1040us, idles at 400 for cucles without
   while (MIDI.read()) {  //2us idle, 50 - 150 for a note, 33 - 60 for a midi clock
   }
   
-  if(midiClockRunning){
-    setPixelXY(0, 7, 100, 0, 0);  // HERE!!!!
+  if(rotaryPushState){
+    //setPixelXY(0, 7, 100, 0, 0);  // HERE!!!!
+    displayNumber(1234, -1,2);
   }
 
   fastLEDUpdateCounter++;

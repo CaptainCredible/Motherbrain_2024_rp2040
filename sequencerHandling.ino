@@ -365,7 +365,7 @@ void handleStep(byte stepToHandle) {
 void triggerMidiNote(byte noteToSend, byte channelToSend) {
   if (numActiveNotes < maxTimedNotes) {
     byte midiNote = noteToSend + 60;
-    if(!midiClockRunning){
+    if(!midiClockRunning){   // this keeps us from sending midi if we are busy receiving midi. 
       MIDI.sendNoteOn(midiNote, 127, channelToSend); // TRY COMMENTING OUT THIS!!!
       addTimedNote(midiNote, 50, channelToSend);  // Assuming 50ms is the duration for each note ALSO TRY TO REMOVE THIS AS TEST???
     }
