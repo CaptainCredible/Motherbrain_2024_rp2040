@@ -303,7 +303,7 @@ void addTimedNote(byte note, unsigned long duration, byte midiChannel) {
 void checkAndHandleTimedNotes() {
   for (int i = 0; i < maxTimedNotes; i++) {
     if (timedNotes[i].note != 0 && (millis() - timedNotes[i].startTime) > timedNotes[i].duration) {
-      MIDI.sendNoteOff(timedNotes[i].note, 127, timedNotes[i].channel);
+      USBMIDI.sendNoteOff(timedNotes[i].note, 127, timedNotes[i].channel);
       timedNotes[i].note = 0;  // Reset the note to indicate it's handled
       numActiveNotes--;
     }
@@ -366,7 +366,7 @@ void triggerMidiNote(byte noteToSend, byte channelToSend) {
   if (numActiveNotes < maxTimedNotes) {
     byte midiNote = noteToSend + 60;
     if(!midiClockRunning){   // this keeps us from sending midi if we are busy receiving midi. 
-      MIDI.sendNoteOn(midiNote, 127, channelToSend); // TRY COMMENTING OUT THIS!!!
+      USBMIDI.sendNoteOn(midiNote, 127, channelToSend); // TRY COMMENTING OUT THIS!!!
       addTimedNote(midiNote, 50, channelToSend);  // Assuming 50ms is the duration for each note ALSO TRY TO REMOVE THIS AS TEST???
     }
   }

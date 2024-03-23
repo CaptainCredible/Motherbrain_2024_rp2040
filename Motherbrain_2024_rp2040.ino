@@ -17,6 +17,8 @@ things to add:
 
 */
 
+int debugNum = 0;
+
 //#define FASTLED_RP2040_CLOCKLESS_PIO //gives me error: #if with no expression 7 | #if FASTLED_RP2040_CLOCKLESS_PIO
 #define DEBUG_ENABLED false
 #if DEBUG_ENABLED
@@ -101,7 +103,8 @@ byte currentInstCol[3] = { 0, 255, 0 };
 
 // Create a new instance of the Arduino MIDI Library,
 // and attach usb_midi as the transport.
-MIDI_CREATE_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI);
+MIDI_CREATE_INSTANCE(Adafruit_USBD_MIDI, usb_midi, USBMIDI);
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial1,     HWMIDI);
 
 //grid
 #define DATA_PIN 2    // neopixel pin
@@ -213,12 +216,19 @@ void setup() {
   TinyUSB_Device_Init(0);
 #endif
   //usb_midi.setStringDescriptor("mthr");
+  Serial1.setRX(1);
+  Serial1.setTX(0);
+  HWMIDI.begin(MIDI_CHANNEL_OMNI);
+  HWMIDI.turnThruOff();
 
-  MIDI.begin(MIDI_CHANNEL_OMNI);
-  MIDI.turnThruOff();
-  MIDI.setHandleClock(handleUsbMidiClockTicks);
-  MIDI.setHandleNoteOn(HandleUsbNoteOn);
-  MIDI.setHandleNoteOff(HandleUsbNoteOff);
+  USBMIDI.begin(MIDI_CHANNEL_OMNI);
+  USBMIDI.turnThruOff();
+  USBMIDI.setHandleClock(handleUsbMidiClockTicks);
+  USBMIDI.setHandleNoteOn(HandleUsbNoteOn);
+  USBMIDI.setHandleNoteOff(HandleUsbNoteOff);
+  
+  
+
 
   //GRID
   setupGridPins();  //setup pins for buttonGrid
@@ -278,9 +288,8 @@ void handleUsbMidiClockTicks() {
 unsigned long lastShow = 0;
 byte fastLEDUpdateCounter = 0;
 byte mode = overviewMode;
-void loop() { // the whole loop uses max 1040us, idles at 400 for cucles without FastLED.show(), and 500 for cucles with FastLED.show()
+void loop() { // the whole loop uses max 1040us, idles at 400 for cucles without FastLED.show(), and 500 for cycles with FastLED.show()
   FastLED.clear();
-
   if (millis() - lastMidiClockReceivedTime > 1000) {  // is it more htan 1000ms since midi clock
     midiClockRunning = false;
   }
@@ -316,7 +325,6 @@ void loop() { // the whole loop uses max 1040us, idles at 400 for cucles without
   
   checkStepTimer();  // will also draw cursor 2us
   
-
   checkAndHandleTimedNotes();  // usually 8us occasionally as high as 117us //check this in detail
   
   handleI2CTimeout(); //2us
@@ -325,12 +333,13 @@ void loop() { // the whole loop uses max 1040us, idles at 400 for cucles without
   
   //MIDI.read();
   
-  while (MIDI.read()) {  //2us idle, 50 - 150 for a note, 33 - 60 for a midi clock
+  while (USBMIDI.read()) {  //2us idle, 50 - 150 for a note, 33 - 60 for a midi clock
   }
   
   if(rotaryPushState){
     //setPixelXY(0, 7, 100, 0, 0);  // HERE!!!!
-    displayNumber(1234, -1,2);
+    displayNumber(debugNum, -1,2);
+
   }
 
   fastLEDUpdateCounter++;
@@ -340,16 +349,11 @@ void loop() { // the whole loop uses max 1040us, idles at 400 for cucles without
   }
 }
 
-
-
-
 unsigned long lastStepTime = 0;
-
 void handleOverviewMode() {
   drawCursor(currentStep);
   drawSeqOverview(currentSeq);
   for (int row = 0; row < GRIDSTEPS; row++) {
-    //drawStepState(0,0,row);
     for (int col = 0; col < GRIDROWS; col++) {
       if (buttStates2D[row][col] == true) {
         crossHair(row, col);
@@ -419,7 +423,6 @@ template<typename T>
 T toggleBit(T input, byte bit) {
   // Calculate the number of bits in the input type
   int numBits = sizeof(T) * 8;
-
   if (bit >= 0 && bit < numBits) {
     // Toggle the bit
     input ^= (T(1) << bit);
@@ -454,5 +457,4 @@ void toggleSolo(byte trackNumber) {
       mutes = setBit(mutes, i, true);
     }
   }
-  //Serial.println(mutes, BIN);
 }
