@@ -357,15 +357,23 @@ void scanButtsNKnobs() {
         }
         if (!playing) {
           currentStep = -1;
+          HWMIDI.sendStop();
         } else if (playing) {
-          lastStepTime = millis();
+          HWMIDI.sendStart();
+          HWMIDI.sendClock();
+          counter24ppqn = 0;
+          lastStepTime = micros();
           currentStep = 0;
           handleStep(currentStep);
         }
       } else {
         if (shiftState) {
-          currentStep = -1;
-          midiClockCounter = 5;
+          //HWMIDI.sendStop();
+          lastStepTime = micros();
+          currentStep = 0;
+          midiClockCounter = 0;
+          counter24ppqn = 0;
+          handleStep(currentStep);
         }
       }
     }
@@ -398,9 +406,22 @@ int tempoToMillis(int bpm) {
   return tempMillis;
 }
 
-long tempoToMicros(int bpm) {
-  return (unsigned long)round(60000000.0 / bpm);
+int tempoToMicros(int bpm) {
+  unsigned int tempMicros = round(60000000.0 / bpm); // Adjusted for microseconds
+  tempMicros = tempMicros >> 2; // This operation remains the same, as it's independent of the unit.
+  return tempMicros;
 }
+
+int tempoToMicros24(int bpm) {
+  // Calculate the number of microseconds for one beat
+  unsigned int tempMicros = round(60000000.0 / bpm);
+  
+  // Divide by 24 to get the time for one MIDI Clock pulse
+  tempMicros = tempMicros / 24;
+  
+  return tempMicros;
+}
+
 
 void handleRotaryPush() {  //rotaryclick
   swState = digitalRead(swPin);

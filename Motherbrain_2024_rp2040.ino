@@ -11,12 +11,11 @@
 
 things to add:
   - transpose
-  - chain sequences
+  - chain sequences (add own chain page ?)
   - change MIDI clock input subdivision
   - MIDI CLOCK OUT, all clock stuff should be rewritten to measure 24ths of a step?
   - Randomize
   - hold multiple solos at once and unmute everything when nothing is soloed
-
 */
 
 int debugNum = 0; // Variable to store a number that will br displaye on the scrim
@@ -76,6 +75,7 @@ byte fadedTrackColors[8][3] = {
 };
 
 
+int counter24ppqn = -1;
 
 int tempo = 120;
 int oldTempo = 0;
@@ -94,6 +94,8 @@ byte currentSeq = 0;
 byte currentInst = 0;
 bool playing = false;
 unsigned int tempoMillis = 100;
+unsigned long tempoMicros = 100000;
+unsigned long tempoMicros24 = 4167;
 uint16_t numberToDisplay = 0;
 int viewOffset = 0;
 //byte maxViewOffset = 7;
@@ -302,7 +304,8 @@ void loop() { // the whole loop uses max 1040us, idles at 400 for cycles without
 
   handleRotaryPush();
   if (tempo != oldTempo) {
-    tempoMillis = tempoToMillis(tempo);
+    //tempoMillis = tempoToMillis(tempo);
+    tempoMicros24 = tempoToMicros24(tempo);
     numberToDisplay = tempo;
     textDisplayStartTime = millis();
     oldTempo = tempo;
@@ -392,13 +395,18 @@ void handleInstSeqMode() {
 
 int lastHandledStep = -2;
 void checkStepTimer() {
-  unsigned long nowTime = millis();
-  if (nowTime >= lastStepTime + tempoMillis) {           // if we reached the end of the step
-    unsigned int goalTime = lastStepTime + tempoMillis;  // the time we were aiming for
+  unsigned long nowTime = micros();
+  if (nowTime >= lastStepTime + tempoMicros24) {           // if we reached the end of the step
+    unsigned long goalTime = lastStepTime + tempoMicros24;  // the time we were aiming for
     int diff = nowTime - goalTime;                       //how far did we overshoot?
-    lastStepTime = millis() - diff;                      //compensate for overshoot
+    lastStepTime = micros() - diff;                      //compensate for overshoot
     if (playing) {
-      currentStep = (currentStep + 1) % GRIDSTEPS;
+      sendClockTick();
+      counter24ppqn++;
+      counter24ppqn = counter24ppqn % 6;
+      if(counter24ppqn == 0){
+        currentStep = (currentStep + 1) % GRIDSTEPS;
+      }
     }
   }
   if(currentStep != lastHandledStep){
@@ -407,6 +415,10 @@ void checkStepTimer() {
   }
 }
 
+
+void sendClockTick(){
+  HWMIDI.sendClock();
+}
 
 template<typename T>
 T setBit(T input, byte bit, bool state) {
