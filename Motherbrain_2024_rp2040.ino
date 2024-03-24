@@ -10,17 +10,20 @@
 /*
 
 things to add:
-
-  - Hardware MIDI out
+  - transpose
+  - chain sequences
+  - change MIDI clock input subdivision
+  - MIDI CLOCK OUT, all clock stuff should be rewritten to measure 24ths of a step?
   - Randomize
-  - 
+  - hold multiple solos at once and unmute everything when nothing is soloed
 
 */
 
-int debugNum = 0;
+int debugNum = 0; // Variable to store a number that will br displaye on the scrim
 
 //#define FASTLED_RP2040_CLOCKLESS_PIO //gives me error: #if with no expression 7 | #if FASTLED_RP2040_CLOCKLESS_PIO
-#define DEBUG_ENABLED false
+//#define DEBUG_ENABLED
+
 #if DEBUG_ENABLED
 #define debug(x) Serial.print(x)
 #define debugln(x) Serial.println(x)
@@ -83,6 +86,7 @@ Adafruit_USBD_MIDI usb_midi;
 
 
 //seq related
+byte stepDataSize = 32;
 byte solos = 0b00000000;
 uint16_t mutes = 0b00000000;
 volatile int currentStep = -1;
@@ -92,7 +96,8 @@ bool playing = false;
 unsigned int tempoMillis = 100;
 uint16_t numberToDisplay = 0;
 int viewOffset = 0;
-byte maxViewOffset = 7;
+//byte maxViewOffset = 7;
+byte maxViewOffset = stepDataSize - 9;
 
 //led related
 byte cycle = 0;
@@ -180,7 +185,8 @@ byte PLAYPAUSEPIN = 10;
 volatile int rotaryVal = 0;
 byte lastEncoded = 0;
 
-#define EEPROM_SIZE 4096  //maximum
+//#define EEPROM_SIZE 4096  //maximum
+#define EEPROM_SIZE 8192  //maximum
 #define SEQUENCE_SIZE 512
 #define SEQUENCE_FLAG 123
 
@@ -288,7 +294,7 @@ void handleUsbMidiClockTicks() {
 unsigned long lastShow = 0;
 byte fastLEDUpdateCounter = 0;
 byte mode = overviewMode;
-void loop() { // the whole loop uses max 1040us, idles at 400 for cucles without FastLED.show(), and 500 for cycles with FastLED.show()
+void loop() { // the whole loop uses max 1040us, idles at 400 for cycles without FastLED.show(), and 500 for cycles with FastLED.show()
   FastLED.clear();
   if (millis() - lastMidiClockReceivedTime > 1000) {  // is it more htan 1000ms since midi clock
     midiClockRunning = false;
@@ -301,9 +307,11 @@ void loop() { // the whole loop uses max 1040us, idles at 400 for cucles without
     textDisplayStartTime = millis();
     oldTempo = tempo;
   }
-
-  scanGrid();  //scan the grid TAKES 335 microseconds
-
+  
+  if(fastLEDUpdateCounter == 8){
+    scanGrid();  //scan the grid TAKES 335 microseconds  
+  }
+  
   scanButtsNKnobs();  // takes 2 microseconds
   
   switch (mode) {

@@ -1,5 +1,5 @@
 
-uint16_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 sequences, each row = an instrument, the bits in the number = the notes
+uint32_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 sequences, each row = an instrument, the bits in the number = the notes
   {
     // seq 1 2
     { 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0 },  // inst 1
@@ -94,26 +94,29 @@ void randomize(byte whotSeq, byte whotInst) {
 //this times 4 pages = 2048
 //bump it up to 64bits = 8bytes * 16steps * 8 instruments = 1024bytes per page (a.k.a. sequence) * 4 pages = 4096, this means no room for flags. just read EEPROM anyway?
 // WE NEED BIGGER STORAGE FOR 64 notes / bits per step!
-// if we go all the way up to 128, we need 16bytes * 16 steps * 8 instruments = 2048 per page, * 4 pages = 8192. i would also like to set some flags and other settings so i guess 16kB
+// if we go all the way up to 128, we need 16bytes * 16 steps * 8 instruments = 2048 bytes per page, * 4 pages = 8192. i would also like to set some flags and other settings so i guess 16kB
 // if i was to rewrite to describe individual 7bit notes i would get (128/7 = 18 note polyphony per step per inst...) hmm. or 9 note polyphony if i use 64bits pet step.
-// or i could use 2 bytes per step to describe step number and end and then only store the notes i need, giving me an average of like 6-7 notes per step ? doesnt quite align with bytes so it would get complicated
 
-
+// or i could use 1 byte per step to describe step number (last bit s not needed to store note number up to 127 so last bit can be to signify step) then only store the notes i need, giving me an average of like 6-7 notes per step ? doesnt quite align with bytes so it would get complicated
+// i woud need to describe "end of data" with all ones perhaps 
 
 void saveCurrentSequenceToEEPROM(int slot, int trackToSave) {  // 8 saves all tracks
   if (slot >= 0 && slot < 4) {
+    EEPROM.begin(EEPROM_SIZE);
     uint32_t address = slot * (SEQUENCE_SIZE + 1);  // +1 for the flag
-    EEPROM.write(address, SEQUENCE_FLAG);           // Write the flag
+    //EEPROM.write(address, SEQUENCE_FLAG);           // Write the flag
     address++;
     for (int i = 0; i < 8; i++) {
       for (int j = 0; j < 16; j++) {
         if (trackToSave == i || trackToSave == ALLTRACKS) {
-          EEPROM.put(address, seqMatrix[currentSeq][i][j]);
+          uint32_t truncatedStep = seqMatrix[currentSeq][i][j];
+          EEPROM.put(address, truncatedStep);
         }
         address += sizeof(uint32_t);
       }
     }
     EEPROM.commit();
+    EEPROM.end();
     debug("saved instrument ");
     if (trackToSave == ALLTRACKS) {
       debug("ALL TRACKS");
@@ -130,6 +133,7 @@ void saveCurrentSequenceToEEPROM(int slot, int trackToSave) {  // 8 saves all tr
 
 void recallSequenceFromEEPROM(int slot, int trackToLoad) {  // 8 LOADS ALL TRACKS
   if (slot >= 0 && slot < 4) {                              // make sure we arent trying to load outtside of memory
+  EEPROM.begin(EEPROM_SIZE);
     uint32_t address = slot * (SEQUENCE_SIZE + 1);          // +1 for the flag
     //seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS]
     //if (EEPROM.read(address) == SEQUENCE_FLAG) {  // Check the flag
@@ -148,6 +152,7 @@ void recallSequenceFromEEPROM(int slot, int trackToLoad) {  // 8 LOADS ALL TRACK
           //debugln(address);
         }
       }
+      EEPROM.end();
       debug("loaded instrument ");
       if (trackToLoad == 8) {
         debug("ALL TRACKS");
@@ -283,12 +288,15 @@ struct TimedNote {
   unsigned long startTime;
   unsigned long duration;
   byte channel;
+  byte port;
 };
 
+
+#define HWMIDI_PORT 1
+#define USBMIDI_PORT 2
 const int maxTimedNotes = 100;
 TimedNote timedNotes[maxTimedNotes];
 int currentTimedNote = 0;
-
 int numActiveNotes = 0;
 
 void addTimedNote(byte note, unsigned long duration, byte midiChannel) {
@@ -296,6 +304,7 @@ void addTimedNote(byte note, unsigned long duration, byte midiChannel) {
   timedNotes[currentTimedNote].startTime = millis();
   timedNotes[currentTimedNote].duration = duration;
   timedNotes[currentTimedNote].channel = midiChannel;
+  //timedNotes[currentTimedNote].port = outPort;
   currentTimedNote = (currentTimedNote + 1) % maxTimedNotes;  // Circular buffer
   numActiveNotes++;
 }
@@ -303,7 +312,10 @@ void addTimedNote(byte note, unsigned long duration, byte midiChannel) {
 void checkAndHandleTimedNotes() {
   for (int i = 0; i < maxTimedNotes; i++) {
     if (timedNotes[i].note != 0 && (millis() - timedNotes[i].startTime) > timedNotes[i].duration) {
-      USBMIDI.sendNoteOff(timedNotes[i].note, 127, timedNotes[i].channel);
+      HWMIDI.sendNoteOff(timedNotes[i].note, 127, timedNotes[i].channel);
+      if(!midiClockRunning){
+        USBMIDI.sendNoteOff(timedNotes[i].note, 127, timedNotes[i].channel);
+      }
       timedNotes[i].note = 0;  // Reset the note to indicate it's handled
       numActiveNotes--;
     }
@@ -320,7 +332,7 @@ void checkAndHandleTimedNotes() {
 void handleStep(byte stepToHandle) {
   bool tracksBufferIsEmpty = true;
   // handle notes THIS ONLY ACTUALLY SCANS THE CURRENTLY VIEWED INSTRUMENT!!!
-  byte maxNotes = 16;  //our datastructure actually allows 64bit steps but microbitOrchestra currently only likes 16bit
+  byte maxNotes = stepDataSize;  //our datastructure actually allows 64bit steps but microbitOrchestra currently only likes 16bit
   for (byte currentTrack = 0; currentTrack < 8; currentTrack++) {
     if (!bitRead(mutes, currentTrack)) {  // if this track is not muted
       tracksBuffer16x8[currentTrack] = seqMatrix[currentSeq][currentTrack][currentStep];
@@ -335,7 +347,7 @@ void handleStep(byte stepToHandle) {
         byte actualNote = i;
         if (getNote(currentSeq, currentTrack, currentStep, i)) {  //we found a note
 
-          triggerMidiNote(actualNote, currentTrack + 1);  //add one because midichannels start with 1
+          triggerMidiNote(actualNote, currentTrack);  //add one because midichannels start with 1
           //need added logic here to only make sparkles fot the track we are viewing
           if (mode == overviewMode) {
             if (!alreadyTriggeredSparkleForThisTrack) {
@@ -344,7 +356,7 @@ void handleStep(byte stepToHandle) {
               currentInstCol[2] = trackColors[currentTrack][2];
               //addSparkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan*4);  // make that pixel sparkle for 500ms, also invert Y axis
               addSporkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], overviewColor[0], overviewColor[1], overviewColor[2], sparkleLifespan * 2);  // make that pixel sparkle for 500ms, also invert Y axis
-              addSparkle(15, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);
+              addSporkle(15, currentTrack,255,255,255,currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);
               alreadyTriggeredSparkleForThisTrack = true;
             }
           } else {
@@ -365,10 +377,11 @@ void handleStep(byte stepToHandle) {
 void triggerMidiNote(byte noteToSend, byte channelToSend) {
   if (numActiveNotes < maxTimedNotes) {
     byte midiNote = noteToSend + 60;
+    HWMIDI.sendNoteOn(midiNote, 127, channelToSend+1);
     if(!midiClockRunning){   // this keeps us from sending midi if we are busy receiving midi. 
-      USBMIDI.sendNoteOn(midiNote, 127, channelToSend); // TRY COMMENTING OUT THIS!!!
-      addTimedNote(midiNote, 50, channelToSend);  // Assuming 50ms is the duration for each note ALSO TRY TO REMOVE THIS AS TEST???
+      USBMIDI.sendNoteOn(midiNote, 126, channelToSend+1); // TRY COMMENTING OUT THIS!!!  
     }
+    addTimedNote(midiNote, 50, channelToSend);  // Assuming 50ms is the duration for each note ALSO TRY TO REMOVE THIS AS TEST???
   }
 }
 

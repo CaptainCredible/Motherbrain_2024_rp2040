@@ -57,7 +57,7 @@ void instSeqModeButts(byte x, byte y) {
           byte slotToSaveTo = x;
           //debug("save instrument to slot ");
           //debugln(slotToSaveTo);
-          if (buttStates2D[11][7] == true) {  //is the save button pressed?
+          if (buttStates2D[12][7] == true) {  //is the save button pressed?
             saveCurrentSequenceToEEPROM(slotSelect, currentInst);
           } else {
             if (!utilState) {
@@ -136,6 +136,18 @@ void overviewModeButts(byte x, byte y) {
   byte slotSelect = x;  // Assign values within the cases
   if (shiftState) {
     switch (x) {
+      case 15:
+      break;
+      case 14:
+      break;
+      case 13:
+      break;
+      case 12:
+      break;
+      case 11:
+      break;
+      case 10:
+      break;
       case 9:
         randomize(currentSeq, y);
         debug("randomized seq ");
@@ -164,7 +176,7 @@ void overviewModeButts(byte x, byte y) {
         }
         debug("slot number ");
         debugln(slotSelect);
-        if (buttStates2D[11][7] == true) {  //is the save button pressed?
+        if (buttStates2D[12][7] == true) {  //is the save button pressed?
           debugln("SAVE BITCH!");
           if (utilState) {
             saveCurrentSequenceToEEPROM(slotSelect, ALLTRACKS);  //save instrument "y" to slot "x" (saveselect)
