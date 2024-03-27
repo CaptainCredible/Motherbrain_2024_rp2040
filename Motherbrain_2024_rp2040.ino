@@ -10,6 +10,8 @@
 /*
 
 things to add:
+  - feedback messages
+  - tell me if save recall worked or not
   - transpose
   - chain sequences (add own chain page ?)
   - change MIDI clock input subdivision
@@ -18,10 +20,10 @@ things to add:
   - hold multiple solos at once and unmute everything when nothing is soloed
 */
 
-int debugNum = 0; // Variable to store a number that will br displaye on the scrim
+int debugNum = 0;  // Variable to store a number that will br displaye on the scrim
 
-//#define FASTLED_RP2040_CLOCKLESS_PIO //gives me error: #if with no expression 7 | #if FASTLED_RP2040_CLOCKLESS_PIO
-//#define DEBUG_ENABLED
+#define FASTLED_RP2040_CLOCKLESS_PIO true //gives me error: #if with no expression 7 | #if FASTLED_RP2040_CLOCKLESS_PIO
+#define DEBUG_ENABLED true
 
 #if DEBUG_ENABLED
 #define debug(x) Serial.print(x)
@@ -38,10 +40,13 @@ int debugNum = 0; // Variable to store a number that will br displaye on the scr
 #include <FastLED.h>
 #include <EEPROM.h>
 #include <Wire.h>
+#include <LittleFS.h>
 
 #define overviewMode 0
 #define instSeqMode 1
 #define ALLTRACKS 8
+
+
 
 int sparkleLifespan = 200;
 volatile uint16_t tracksBuffer16x8[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };      //tracks 0 - 8 then currentstep then mutes
@@ -78,7 +83,7 @@ byte fadedTrackColors[8][3] = {
 int counter24ppqn = -1;
 
 int tempo = 120;
-int oldTempo = 0;
+int oldTempo = 120;
 
 // USB MIDI object
 Adafruit_USBD_MIDI usb_midi;
@@ -86,7 +91,7 @@ Adafruit_USBD_MIDI usb_midi;
 
 
 //seq related
-byte stepDataSize = 32;
+byte stepDataSize = 64;
 byte solos = 0b00000000;
 uint16_t mutes = 0b00000000;
 volatile int currentStep = -1;
@@ -105,13 +110,13 @@ byte maxViewOffset = stepDataSize - 9;
 byte cycle = 0;
 byte testColor = 255;
 int textDisplayTimeout = 500;  //500 ms from text is displayed until it dissappears
-int textDisplayStartTime = 0; //to store the time the text started displaying
+int textDisplayStartTime = -500;  //to store the time the text started displaying
 byte currentInstCol[3] = { 0, 255, 0 };
 
 // Create a new instance of the Arduino MIDI Library,
 // and attach usb_midi as the transport.
 MIDI_CREATE_INSTANCE(Adafruit_USBD_MIDI, usb_midi, USBMIDI);
-MIDI_CREATE_INSTANCE(HardwareSerial, Serial1,     HWMIDI);
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, HWMIDI);
 
 //grid
 #define DATA_PIN 2    // neopixel pin
@@ -135,7 +140,7 @@ unsigned long swDebounceTime = 5;
 int swState = 0;
 
 //i2c
-const byte interruptPin = 22; //pin to interrupt uBit
+const byte interruptPin = 22;  //pin to interrupt uBit
 
 //buttons
 byte playPausePin = 10;
@@ -234,27 +239,25 @@ void setup() {
   USBMIDI.setHandleClock(handleUsbMidiClockTicks);
   USBMIDI.setHandleNoteOn(HandleUsbNoteOn);
   USBMIDI.setHandleNoteOff(HandleUsbNoteOff);
-  
-  
-
 
   //GRID
   setupGridPins();  //setup pins for buttonGrid
   //pixels.begin();   // INITIALIZE NeoPixel strip object (REQUIRED)
   FastLED.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);  // INITIALIZE NeoPixel strip object (REQUIRED)
   initLedGridState();
-  //FastLED.show(); 
+  //FastLED.show();
   //delay(1000); // needed?
   testSetXY(100);
-
+  testColor = 255;                     // green
   unsigned long startTime = millis();  // Capture start time
   while (!TinyUSBDevice.mounted()) {
     delay(1);                           // Wait for 1 millisecond
     if (millis() - startTime > 1000) {  // Check if 1000ms have passed
       break;                            // Exit the loop if more than 1000ms have passed
+      testColor = 0;
     }
   }
-  testSetXY(255);
+  testSetXY(testColor);
   currentSeq = 0;
   recallSequenceFromEEPROM(0, ALLTRACKS);
   currentSeq = 1;
@@ -274,8 +277,8 @@ void setup() {
   currentSeq = 0;
 }
 
-bool runClock = true;  //run internal clock
-bool midiClockRunning = false; //the MIDI clock is running, this is unnessecary, tghe runClock variable should mirror this
+bool runClock = true;                         //run internal clock
+bool midiClockRunning = false;                //the MIDI clock is running, this is unnessecary, tghe runClock variable should mirror this
 unsigned long lastMidiClockReceivedTime = 0;  //how long since last time we received a midi clock
 int midiClockDiv = 6;
 byte midiClockCounter = 5;
@@ -296,7 +299,7 @@ void handleUsbMidiClockTicks() {
 unsigned long lastShow = 0;
 byte fastLEDUpdateCounter = 0;
 byte mode = overviewMode;
-void loop() { // the whole loop uses max 1040us, idles at 400 for cycles without FastLED.show(), and 500 for cycles with FastLED.show()
+void loop() {  // the whole loop uses max 1040us, idles at 400 for cycles without FastLED.show(), and 500 for cycles with FastLED.show()
   FastLED.clear();
   if (millis() - lastMidiClockReceivedTime > 1000) {  // is it more htan 1000ms since midi clock
     midiClockRunning = false;
@@ -310,13 +313,13 @@ void loop() { // the whole loop uses max 1040us, idles at 400 for cycles without
     textDisplayStartTime = millis();
     oldTempo = tempo;
   }
-  
-  if(fastLEDUpdateCounter == 8){
-    scanGrid();  //scan the grid TAKES 335 microseconds  
+
+  if (fastLEDUpdateCounter == 8) {
+    scanGrid();  //scan the grid TAKES 335 microseconds
   }
-  
+
   scanButtsNKnobs();  // takes 2 microseconds
-  
+
   switch (mode) {
     case instSeqMode:
       handleInstSeqMode();  //not responsible for crashes 40 - 150 us
@@ -325,38 +328,39 @@ void loop() { // the whole loop uses max 1040us, idles at 400 for cycles without
       handleOverviewMode();  //not responsible for crashes 100 - 150 us
       break;
   }
-  
+
   displayPageNoBlink();  // 3us
-  
+
   updateSparkles();  // not responsible, 340us
-  
+
   if (millis() < textDisplayStartTime + textDisplayTimeout) {
     displayNumber(numberToDisplay, 4, 3);
   }
-  
+
   checkStepTimer();  // will also draw cursor 2us
-  
+
   checkAndHandleTimedNotes();  // usually 8us occasionally as high as 117us //check this in detail
-  
-  handleI2CTimeout(); //2us
-  
-  checkUSBMidiTimout(); // 2us idle, 20us with many notes
-  
+
+  handleI2CTimeout();  //2us
+
+  checkUSBMidiTimout();  // 2us idle, 20us with many notes
+
   //MIDI.read();
-  
+
   while (USBMIDI.read()) {  //2us idle, 50 - 150 for a note, 33 - 60 for a midi clock
   }
-  
-  if(rotaryPushState){
-    //setPixelXY(0, 7, 100, 0, 0);  // HERE!!!!
-    displayNumber(debugNum, -1,2);
 
+  if (rotaryPushState) {
+    //setPixelXY(0, 7, 100, 0, 0);  // HERE!!!!
+    displayNumber(debugNum, -1, 2);
   }
+
+  //displayText("USB",0,0);
 
   fastLEDUpdateCounter++;
   fastLEDUpdateCounter = fastLEDUpdateCounter % 16;  // this MASSIVELY inproves performance, %16 gives me approx 140FPS
   if (fastLEDUpdateCounter == 0) {
-    FastLED.show(); //175us
+    FastLED.show();  //175us
   }
 }
 
@@ -396,27 +400,27 @@ void handleInstSeqMode() {
 int lastHandledStep = -2;
 void checkStepTimer() {
   unsigned long nowTime = micros();
-  if (nowTime >= lastStepTime + tempoMicros24) {           // if we reached the end of the step
+  if (nowTime >= lastStepTime + tempoMicros24) {            // if we reached the end of the step
     unsigned long goalTime = lastStepTime + tempoMicros24;  // the time we were aiming for
-    int diff = nowTime - goalTime;                       //how far did we overshoot?
-    lastStepTime = micros() - diff;                      //compensate for overshoot
+    int diff = nowTime - goalTime;                          //how far did we overshoot?
+    lastStepTime = micros() - diff;                         //compensate for overshoot
     if (playing) {
       sendClockTick();
       counter24ppqn++;
       counter24ppqn = counter24ppqn % 6;
-      if(counter24ppqn == 0){
+      if (counter24ppqn == 0) {
         currentStep = (currentStep + 1) % GRIDSTEPS;
       }
     }
   }
-  if(currentStep != lastHandledStep){
+  if (currentStep != lastHandledStep) {
     handleStep(currentStep);
     lastHandledStep = currentStep;
   }
 }
 
 
-void sendClockTick(){
+void sendClockTick() {
   HWMIDI.sendClock();
 }
 
@@ -468,7 +472,7 @@ void toggleMute(byte trackNumber) {
 }
 
 void toggleSolo(byte trackNumber) {
-  debug("SOLOED ");
+  //debug"SOLOED ");
   debugln(trackNumber);
   for (byte i = 0; i < 8; i++) {
     if (i == trackNumber) {

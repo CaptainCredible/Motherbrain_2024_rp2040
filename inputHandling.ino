@@ -35,10 +35,10 @@ void handleButtRelease(byte x, byte y) {  //also handles buttrelease
 //INVERTS THE Y VALUE
 void instSeqModeButts(byte x, byte y) {
   if (shiftState) {
-    debug("x = ");
-    debug(x);
-    debug("  y = ");
-    debugln(y);
+    //debug("x = ");
+    //debug(x);
+    //debug("  y = ");
+    //debugln(y);
     byte slotSelect = x;
     switch (x) {
       case 0:
@@ -108,10 +108,10 @@ void instSeqModeButts(byte x, byte y) {
         addSporkle(13, y, 30, 30, 30, 0, 0, 0, 500);
         addSporkle(12, y, 5, 5, 5, 0, 0, 0, 500);
 
-        triggerMidiNote((7-y) + viewOffset, currentInst + 1);
+        triggerMidiNote((7-y) + viewOffset, currentInst);
         bitSet(midiTracksBuffer16x8[currentInst - 1], (7-y) + viewOffset);  //set corresponding bit in corresponding uint16_t in the buffer to be sent
         waitingForMIDITimeOut = false;
-        debugln("usbmidi Timed Out");
+        //debugln("usbmidi Timed Out");
         sendUsbMidiPackage();
 
         break;
@@ -119,8 +119,11 @@ void instSeqModeButts(byte x, byte y) {
   } else {  // if shift is not held in
     byte invertedY = (GRIDROWS - 1) - y;
     byte invertedOffsetY = invertedY + viewOffset;
-    //debugln(invertedOffsetY);
+    //debug("toggling note ");
+    //debug(invertedOffsetY);
     toggleNote(currentSeq, currentInst, x, invertedOffsetY);      //toggle the note stored in seq 0, intrument 0, step x, note y
+    //debug(" it is now ");
+    //debugln(getNote(currentSeq, currentInst, x, invertedOffsetY));
     if (!getNote(currentSeq, currentInst, x, invertedOffsetY)) {  //if we just turned this note off
       removeSparkle(x, y);                                        // stop the sparkle
     }
@@ -150,8 +153,8 @@ void overviewModeButts(byte x, byte y) {
       break;
       case 9:
         randomize(currentSeq, y);
-        debug("randomized seq ");
-        debugln(y);
+        ////debug("randomized seq ");
+        ////debugln(y);
         break;
       case 8:  // clear
         if (utilState) {
@@ -174,19 +177,21 @@ void overviewModeButts(byte x, byte y) {
         if (utilState) {
           trackSelect = 8;
         }
-        debug("slot number ");
-        debugln(slotSelect);
+        //debug("slot number ");
+        //debugln(slotSelect);
         if (buttStates2D[12][7] == true) {  //is the save button pressed?
-          debugln("SAVE BITCH!");
+          //debugln("SAVE BITCH!");
           if (utilState) {
-            saveCurrentSequenceToEEPROM(slotSelect, ALLTRACKS);  //save instrument "y" to slot "x" (saveselect)
+            saveCurrentSequenceToFile(slotSelect, ALLTRACKS);
+            //saveCurrentSequenceToEEPROM(slotSelect, ALLTRACKS);  //save instrument "y" to slot "x" (saveselect)
             for (byte i = 0; i < 4; i++) {
               for (byte j = 0; j < 8; j++) {
                 addSporkle(i, j, 40, 0, 0, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
               }
             }
           } else {
-            saveCurrentSequenceToEEPROM(slotSelect, trackSelect);  //save instrument "y" to slot "x" (saveselect)
+            saveCurrentSequenceToFile(slotSelect, trackSelect);
+            //saveCurrentSequenceToEEPROM(slotSelect, trackSelect);  //save instrument "y" to slot "x" (saveselect)
             for (byte i = 0; i < 8; i++) {
               addSporkle(x, i, 50, 0, 0, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
               //addSparkle(x, i, 0, 0, 50, sparkleLifespan);  // MAKE LOAD ANIM WITH THIS!!!
@@ -198,7 +203,8 @@ void overviewModeButts(byte x, byte y) {
           }
         } else {  // if save button is not held in
           if (!utilState) {
-            recallSequenceFromEEPROM(slotSelect, y);
+            recallSequenceFromFile(slotSelect, y);
+            //recallSequenceFromEEPROM(slotSelect, y);
             for (byte i = 0; i < 8; i++) {
               addSporkle(x, i, 0, 50, 50, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
               //addSparkle(x, i, 0, 0, 50, sparkleLifespan);  // MAKE LOAD ANIM WITH THIS!!!
@@ -210,7 +216,8 @@ void overviewModeButts(byte x, byte y) {
 
 
           } else {
-            recallSequenceFromEEPROM(slotSelect, ALLTRACKS);
+            recallSequenceFromFile(slotSelect, ALLTRACKS);
+            //recallSequenceFromEEPROM(slotSelect, ALLTRACKS);
             for (byte i = 0; i < 4; i++) {
               for (byte j = 0; j < 8; j++) {
                 addSporkle(i, j, 0, 20, 20, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
@@ -232,17 +239,17 @@ void overviewModeButts(byte x, byte y) {
       case 14:  // mute column
         toggleMute(y);
         if (bitRead(mutes, y)) {
-          debug("muted ");
+          //debug("muted ");
         } else {
-          debug("unmuted ");
+          //debug("unmuted ");
         }
-        debugln(y);
+        //debugln(y);
 
         break;
       case 13:  // solo column
         toggleSolo(y);
-        debug("soloed ");
-        debugln(y);
+        //debug("soloed ");
+        //debugln(y);
         break;
       case 0:
       case 1:
@@ -259,10 +266,10 @@ void overviewModeButts(byte x, byte y) {
         }
         displayNumber(x, 4, 3);
       default:
-        debug("x = ");
-        debug(x);
-        debug(" and y = ");
-        debugln(y);
+        //debug("x = ");
+        //debug(x);
+        //debug(" and y = ");
+        //debugln(y);
         break;
     }
   }
@@ -339,9 +346,9 @@ void scanButtsNKnobs() {
       } else {
         mode = overviewMode;
       }
-      debugln("butt pressed");
+      //debugln("butt pressed");
     } else {
-      debugln("butt released");
+      //debugln("butt released");
     }
   }
 
@@ -431,7 +438,7 @@ void handleRotaryPush() {  //rotaryclick
       if(rotaryPushState){
 
       }
-      debugln(swState);
+      //debugln(swState);
       lastSwTime = millis();
     }
   }
@@ -468,13 +475,13 @@ void handleRotary() {
 }
 
 void drawRotaryMasterCounterOverSerial() {
-  debug("rotary = ");
-  debug(rotaryMasterCounter);
-  debug(" ");
+  //debug("rotary = ");
+  //debug(rotaryMasterCounter);
+  //debug(" ");
   for (int i = 0; i < rotaryMasterCounter; i++) {
-    debug("#");
+    //debug("#");
   }
-  debugln();
+  //debugln();
 }
 
 void rotaryMove(int moveAmount) {

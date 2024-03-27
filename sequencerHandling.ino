@@ -1,5 +1,5 @@
 
-uint32_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 sequences, each row = an instrument, the bits in the number = the notes
+uint64_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 sequences, each row = an instrument, the bits in the number = the notes
   {
     // seq 1 2
     { 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0 },  // inst 1
@@ -76,6 +76,7 @@ uint32_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 seq
     { 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 } }
 };
 
+// for randomization
 uint16_t kickPattens[8] = { 0b1000000010000000, 0b1000000000000000, 0b1001001010001000, 0b1001001001001000, 0b1000100110100100, 0b1010000110100000, 0b1000000010001010, 0b1000000010000100 };
 uint16_t snarePatterns[8] = { 0b0000100000001000, 0b0000100101001000, 0b0010010000100100, 0b0010001000100010, 0b0000001000001010, 0b0010001000100001, 0b0000000010000000, 0b0000100001001000 };
 uint16_t hatPatterns[8] = { 0b1000100010001000, 0b0000100000001000, 0b0010010000100100, 0b1010101010101010, 0b1111111111111111, 0b0100100100100100, 0b0001001001001001, 0b1001001001001010 };
@@ -117,17 +118,17 @@ void saveCurrentSequenceToEEPROM(int slot, int trackToSave) {  // 8 saves all tr
     }
     EEPROM.commit();
     EEPROM.end();
-    debug("saved instrument ");
+    //debug("saved instrument ");
     if (trackToSave == ALLTRACKS) {
-      debug("ALL TRACKS");
+      //debug("ALL TRACKS");
     } else {
-      debug(trackToSave);
+      //debug(trackToSave);
     }
-    debug(" to slot ");
-    debugln(slot);
+    //debug(" to slot ");
+    //debugln(slot);
   } else {
     // Handle error: Invalid slot number
-    debugln("invalid slot number");
+    //debugln("invalid slot number");
   }
 }
 
@@ -153,20 +154,20 @@ void recallSequenceFromEEPROM(int slot, int trackToLoad) {  // 8 LOADS ALL TRACK
         }
       }
       EEPROM.end();
-      debug("loaded instrument ");
+      //debug("loaded instrument ");
       if (trackToLoad == 8) {
-        debug("ALL TRACKS");
+        //debug("ALL TRACKS");
       } else {
-        debug(trackToLoad);
+        //debug(trackToLoad);
       }
-      debug(" from slot ");
-      debugln(slot);
+      //debug(" from slot ");
+      //debugln(slot);
     } else {
-      debugln("wrong flag");
+      //debugln("wrong flag");
       // Handle error: Invalid sequence flag, sequence not storedf
     }
   } else {
-    debugln("invalid slot number");
+    //debugln("invalid slot number");
     // Handle error: Invalid slot number
   }
 }
@@ -174,13 +175,13 @@ void recallSequenceFromEEPROM(int slot, int trackToLoad) {  // 8 LOADS ALL TRACK
 // to begin with, just read seqMatrix[0][0][0-15]
 
 bool getNote(byte sequence, byte instrument, byte step, byte note) {
-  uint32_t thisStep = seqMatrix[sequence][instrument][step];
-  return (thisStep & (1UL << note)) != 0;  // Check if the specific bit is set and return the result
+  uint64_t thisStep = seqMatrix[sequence][instrument][step];
+  return (thisStep & (1ULL << note)) != 0;  // Check if the specific bit is set and return the result
 }
 
 // inverted drawing Y axis
 void drawStepState(uint8_t sequence, uint8_t instrument, uint8_t step) {
-  uint32_t thisStep = seqMatrix[sequence][instrument][step];
+  uint64_t thisStep = seqMatrix[sequence][instrument][step];
   for (uint8_t i = 0; i < 8; i++) {                   // iterate over 8 of the 32 potential bits in the uint32_t
     bool thisBit = (thisStep >> i + viewOffset) & 1;  // check if the i-th bit is set
     if (thisBit) {
@@ -233,14 +234,14 @@ void drawSeqOverview(uint8_t currentSeq) {
 }
 
 void setNote(uint8_t sequence, uint8_t instrument, uint8_t step, uint8_t note) {
-  if (note > 31) return;                             // Check if the note value is valid (0 to 31 because uint32_t has 32 bits)
-  uint32_t bitmask = 1UL << note;                    // Create a bitmask for the note
+  if (note > 63) return;                             // Check if the note value is valid (0 to 31 because uint32_t has 32 bits)
+  uint64_t bitmask = 1UL << note;                    // Create a bitmask for the note
   seqMatrix[sequence][instrument][step] |= bitmask;  // Set the bit in the seqMatrix for the specified sequence, instrument, and step
 }
 
 void clearNote(uint8_t sequence, uint8_t instrument, uint8_t step, uint8_t note) {
-  if (note > 31) return;                             // Check if the note value is valid (0 to 31 because uint32_t has 32 bits)
-  uint32_t bitmask = ~(1UL << note);                 // Create a bitmask for the note
+  if (note > 63) return;                             // Check if the note value is valid (0 to 31 because uint32_t has 32 bits)
+  uint64_t bitmask = ~(1UL << note);                 // Create a bitmask for the note
   seqMatrix[sequence][instrument][step] &= bitmask;  // Clear the bit in the seqMatrix for the specified sequence, instrument, and step
 }
 
@@ -277,8 +278,8 @@ void clearInst(byte whotSeq, byte whotInst) {
 
 
 void toggleNote(uint8_t sequence, uint8_t instrument, uint8_t step, uint8_t note) {
-  if (note > 31) return;                             // Check if the note value is valid (0 to 31 because uint32_t has 32 bits)
-  uint32_t bitmask = 1UL << note;                    // Create a bitmask for the note
+  if (note > 63) return;                             // Check if the note value is valid (0 to 63 because uint64_t has 64 bits)
+  uint64_t bitmask = 1ULL << note;                    // Create a bitmask for the note
   seqMatrix[sequence][instrument][step] ^= bitmask;  // Toggle the bit in the seqMatrix for the specified sequence, instrument, and step
 }
 
@@ -389,4 +390,76 @@ void triggerMidiNote(byte noteToSend, byte channelToSend) {
 
 void radioSendClockTick() {
   //sendWire2microBitTrackAndNote(101, 0);			//send that note to microbit (ask microbit to request it.
+}
+
+
+void saveCurrentSequenceToFile(int slot, int trackToSave) {
+  debugln("save");
+  if (slot >= 0 && slot < 4) {
+    LittleFS.begin();
+    String filename = "/seq" + String(slot) + ".dat";  // Create a filename for each slot
+    File file = LittleFS.open(filename, "w");  // Open the file for writing
+    if (file) {
+      for (int i = 0; i < 8; i++) {  // Iterate over tracks
+        for (int j = 0; j < 16; j++) {  // Iterate over steps
+          if (trackToSave == i || trackToSave == ALLTRACKS) {
+            uint64_t truncatedStep = seqMatrix[currentSeq][i][j];
+            file.write((byte*)&truncatedStep, sizeof(truncatedStep));  // Write each step as binary
+          }
+        }
+      }
+      file.close();  // Close the file to save changes
+      debug("saved instrument ");
+      if (trackToSave == ALLTRACKS) {
+        debug("ALL TRACKS");
+      } else {
+        debug(trackToSave);
+      }
+      debug(" to slot ");
+      debugln(slot);
+    } else {
+      debugln("File open failed");
+    }
+    LittleFS.end();
+  } else {
+    debugln("Invalid slot number");
+  }
+}
+
+void recallSequenceFromFile(int slot, int trackToLoad) {
+  if (slot >= 0 && slot < 4) { // Ensure valid slot number
+    LittleFS.begin();
+    String filename = "/seq" + String(slot) + ".dat"; // Construct filename for slot
+    File file = LittleFS.open(filename, "r"); // Open file for reading
+    
+    if (file) {
+      // Calculate the start address for the trackToLoad in the file
+      // This skips directly to the data for the specified track
+      for (int i = 0; i < 8; i++) { // Iterate over tracks
+        if (trackToLoad == i || trackToLoad == ALLTRACKS) {
+          file.seek(i * 16 * sizeof(uint64_t), SeekSet); // Seek to the start of the track in the file
+          for (int j = 0; j < 16; j++) { // Iterate over steps
+            uint64_t value;
+            if(file.read((byte*)&value, sizeof(value)) == sizeof(value)) { // Read each step
+              seqMatrix[currentSeq][i][j] = value; // Assign value to matrix
+            }
+          }
+        }
+      }
+      file.close(); // Close the file
+      debug("loaded instrument ");
+      if (trackToLoad == ALLTRACKS) {
+        debug("ALL TRACKS");
+      } else {
+        debug(trackToLoad);
+      }
+      debug(" from slot ");
+      debugln(slot);
+    } else {
+      debugln("File open failed");
+    }
+    LittleFS.end();
+  } else {
+    debugln("Invalid slot number");
+  }
 }

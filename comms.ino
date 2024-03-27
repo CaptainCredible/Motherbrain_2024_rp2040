@@ -18,7 +18,7 @@ void sendTracksBuffer() {
 }
 
 void interruptUbit() {
-  debugln("intteruptUbit()");
+  ////debugln("intteruptUbit()");
   if (!isSending) {
     isSending = true;
     digitalWrite(interruptPin, LOW);  //start by telling microbit to request track
@@ -28,15 +28,15 @@ void interruptUbit() {
 }
 
 void requestEvent() {  //this is what happens when the microbit asks for a message
-  debug("requestEvent() ");
+  //debug("requestEvent() ");
   if (sentAMidiBuffer) {  //this used to be only midi buffer, but is also used by other functions that need to send immediately
-    debugln("sent midiBuffer");
+    //debugln("sent midiBuffer");
     I2C_writeAnything(midiTracksBuffer16x8);
     clearMidiTracksBuffer();
   } else {
     I2C_writeAnything(tracksBuffer16x8);
-    debug("sent tracksBuffer ");
-    debugln(currentStep);
+    //debug("sent tracksBuffer ");
+    //debugln(currentStep);
   }
   isSending = false;
   digitalWrite(interruptPin, HIGH);
@@ -46,7 +46,7 @@ void requestEvent() {  //this is what happens when the microbit asks for a messa
 // INTERRUPT uBit //
 void handleI2CTimeout() {
   if (millis() - i2cTimeout > i2cTimeoutDuration && isTimedOut == false) {
-    //debugln("handleI2cTimeout()");
+    ////debugln("handleI2cTimeout()");
     digitalWrite(interruptPin, HIGH);
     i2cTimeout == millis();
     isTimedOut = true;
@@ -58,7 +58,7 @@ void handleI2CTimeout() {
 unsigned long lastMIDIMessageTime = 0;
 int USBReceiveTimeOutThresh = 5;  //timeframe to wait for midi notes
 void HandleUsbNoteOn(byte channel, byte note, byte velocity) {
-  debugln("handleUSBNoteOn()");
+  //debugln("handleUSBNoteOn()");
   if (velocity > 0) {
     if (channel < 9) {
       lastMIDIMessageTime = millis();  //start the timer
@@ -89,10 +89,10 @@ unsigned long idleTimer = 0;
 void checkUSBMidiTimout() {
   uint16_t timeSinceMIDIMessage = millis() - lastMIDIMessageTime;
   if (waitingForMIDITimeOut) {             //if we are waiting to see if there are any more messages for this step
-    debugln(timeSinceMIDIMessage);
+    //debugln(timeSinceMIDIMessage);
     if (timeSinceMIDIMessage>USBReceiveTimeOutThresh) {  //if we timed out
       waitingForMIDITimeOut = false;
-      debugln("usbmidi Timed Out");
+      //debugln("usbmidi Timed Out");
       sendUsbMidiPackage();
       //idleTimer = millis();
     }
@@ -103,7 +103,7 @@ void checkUSBMidiTimout() {
 }
 
 void sendUsbMidiPackage() {
-  debugln("sendUSBMidiPackage()");
+  //debugln("sendUSBMidiPackage()");
   if (!isSending) {
     midiTracksBuffer16x8[8] = 200;  //200 shall be the magic number
     sentAMidiBuffer = true;         //flag the fact that we are sending midi buffer
@@ -114,13 +114,13 @@ void sendUsbMidiPackage() {
 void clearTracksBuffer() {
   for (int i = 0; i < 8; i++) {
     tracksBuffer16x8[i] = 0;
-    debugln("cleared buffer");
+    //debugln("cleared buffer");
   }
 }
 
 void clearMidiTracksBuffer() {  //also sets sentAMidiBuffer to false
-  debugln("clearMidiTracksBuffer()");
-  debugln();
+  //debugln("clearMidiTracksBuffer()");
+  //debugln();
   for (byte i = 0; i < 8; i++) {  //for every channel entry in buffer
     midiTracksBuffer16x8[i] = 0;  // clear buffer
   }
@@ -128,7 +128,7 @@ void clearMidiTracksBuffer() {  //also sets sentAMidiBuffer to false
 }
 
 void hijackUSBMidiTrackBuffer(byte val, byte slot) {  // to use for preview buttons
-  debugln("hijackMidiTracksBuffer");
+  //debugln("hijackMidiTracksBuffer");
   if (!waitingForMIDITimeOut) {
     clearMidiTracksBuffer();
     bitSet(midiTracksBuffer16x8[slot], val);  //set corresponding bit in corresponding int in the buffer to be sent
@@ -154,7 +154,7 @@ void debugTracksBuffer() {
 }
 
 void debugMidiTracksBuffer() {
-  debug("midiTracksBuffer = ");
+  //debug("midiTracksBuffer = ");
   printAsBinary(midiTracksBuffer16x8, 10);
 }
 
@@ -163,14 +163,14 @@ void printAsBinary(volatile uint16_t *array, size_t size) {
     uint16_t number = array[i];
     for (int bit = 15; bit >= 0; --bit) {
       if (number & (1 << bit)) {
-        debug("1");
+        //debug("1");
       } else {
-        debug("0");
+        //debug("0");
       }
     }
     if (i < size - 1) {
-      debug(" ");
+      //debug(" ");
     }
   }
-  debugln();
+  //debugln();
 }

@@ -40,17 +40,17 @@ void drawHelpers() {
     for (byte j = 0; j < GRIDROWS; j++) {
       //trackColors[8][3]
       //softSetPixelXY(i << 2, j, 2, 0, 0);
-      
+
       softSetPixelXY(i << 2, j, currentInstCol[0] >> gridBrightness, currentInstCol[1] >> gridBrightness, currentInstCol[2] >> gridBrightness);
     }
   }
 }
 
 //bool pianoRoll[12] = {false, true, false, true, false, false, true, false, true, false, true, false};
-bool pianoRoll[12] = {true, false, false, false, false, false, false, true, false, false, false, false};
+bool pianoRoll[12] = { true, false, false, false, false, false, false, true, false, false, false, false };
 void drawPianoRoll() {
   for (int row = 0; row < GRIDROWS; row++) {
-    byte invRow = 7-row;
+    byte invRow = 7 - row;
     int offsetRow = invRow + viewOffset;
     //if(offsetRow<0){offsetRow = 11;}
     if (pianoRoll[offsetRow % 12]) {
@@ -61,8 +61,7 @@ void drawPianoRoll() {
   }
 }
 
-void
-setPixelXYP(int Xcoord, int Ycoord, CHSV colour) {
+void setPixelXYP(int Xcoord, int Ycoord, CHSV colour) {
   if (Xcoord >= 0 && Xcoord < GRIDSTEPS) {
     if (Ycoord >= 0 && Ycoord < GRIDROWS) {  // check that X and Y are within range
       leds[pixelXY(Xcoord, Ycoord)] = colour;
@@ -165,7 +164,6 @@ void drawCursor(byte x) {
 }
 
 
-
 char digits[10][5][4] = {
   { { ' ', '#', '#', '#' },
     { ' ', '#', ' ', '#' },
@@ -237,6 +235,191 @@ char digits[10][5][4] = {
     { ' ', '#', '#', '#' } }  // 9
 };
 
+char alphabet[26][5][4] = {
+  // A
+  {
+    { ' ', '#', '#', ' ' },
+    { '#', ' ', ' ', '#' },
+    { '#', '#', '#', '#' },
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' } },
+  // B
+  {
+    { '#', '#', '#', ' ' },
+    { '#', ' ', ' ', '#' },
+    { '#', '#', '#', ' ' },
+    { '#', ' ', ' ', '#' },
+    { '#', '#', '#', ' ' } },
+  // C
+  {
+    { ' ', '#', '#', '#' },
+    { '#', ' ', ' ', ' ' },
+    { '#', ' ', ' ', ' ' },
+    { '#', ' ', ' ', ' ' },
+    { ' ', '#', '#', '#' } },
+  // D
+  {
+    { '#', '#', '#', ' ' },
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' },
+    { '#', '#', '#', ' ' } },
+  // E
+  {
+    { '#', '#', '#', '#' },
+    { '#', ' ', ' ', ' ' },
+    { '#', '#', '#', ' ' },
+    { '#', ' ', ' ', ' ' },
+    { '#', '#', '#', '#' } },
+  // F
+  {
+    { '#', '#', '#', '#' },
+    { '#', ' ', ' ', ' ' },
+    { '#', '#', '#', ' ' },
+    { '#', ' ', ' ', ' ' },
+    { '#', ' ', ' ', ' ' } },
+  // G
+  {
+    { ' ', '#', '#', '#' },
+    { '#', ' ', ' ', ' ' },
+    { '#', ' ', '#', '#' },
+    { '#', ' ', ' ', '#' },
+    { ' ', '#', '#', ' ' } },
+  // H
+  {
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' },
+    { '#', '#', '#', '#' },
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' } },
+  // I
+  {
+    { '#', '#', '#', '#' },
+    { ' ', ' ', '#', ' ' },
+    { ' ', ' ', '#', ' ' },
+    { ' ', ' ', '#', ' ' },
+    { '#', '#', '#', '#' } },
+  // J
+  {
+    { '#', '#', '#', '#' },
+    { ' ', ' ', ' ', '#' },
+    { ' ', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' },
+    { ' ', '#', '#', ' ' } },
+  // K
+  {
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', '#', ' ' },
+    { '#', '#', ' ', ' ' },
+    { '#', ' ', '#', ' ' },
+    { '#', ' ', ' ', '#' } },
+  // L
+  {
+    { '#', ' ', ' ', ' ' },
+    { '#', ' ', ' ', ' ' },
+    { '#', ' ', ' ', ' ' },
+    { '#', ' ', ' ', ' ' },
+    { '#', '#', '#', '#' } },
+  // M
+  {
+    { '#', ' ', ' ', '#' },
+    { '#', '#', '#', '#' },
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' } },
+  // N
+  {
+    { '#', ' ', ' ', '#' },
+    { '#', '#', ' ', '#' },
+    { '#', ' ', '#', '#' },
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' } },
+  // O
+  {
+    { ' ', '#', '#', ' ' },
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' },
+    { ' ', '#', '#', ' ' } },
+  // P
+  {
+    { '#', '#', '#', ' ' },
+    { '#', ' ', ' ', '#' },
+    { '#', '#', '#', ' ' },
+    { '#', ' ', ' ', ' ' },
+    { '#', ' ', ' ', ' ' } },
+  // Q
+  {
+    { ' ', '#', '#', ' ' },
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', '#', '#' },
+    { ' ', '#', '#', ' ' },
+    { ' ', ' ', ' ', '#' } },
+  // R
+  {
+    { '#', '#', '#', ' ' },
+    { '#', ' ', ' ', '#' },
+    { '#', '#', '#', ' ' },
+    { '#', '#', ' ', ' ' },
+    { '#', ' ', ' ', '#' } },
+  // S
+  {
+    { ' ', '#', '#', '#' },
+    { '#', ' ', ' ', ' ' },
+    { ' ', '#', '#', ' ' },
+    { ' ', ' ', ' ', '#' },
+    { '#', '#', '#', ' ' } },
+  // T
+  {
+    { '#', '#', '#', '#' },
+    { ' ', ' ', '#', ' ' },
+    { ' ', ' ', '#', ' ' },
+    { ' ', ' ', '#', ' ' },
+    { ' ', ' ', '#', ' ' } },
+  // U
+  {
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' },
+    { ' ', '#', '#', ' ' } },
+  // V
+  {
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' },
+    { ' ', '#', '#', ' ' },
+    { ' ', ' ', '#', ' ' } },
+  // W
+  {
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' },
+    { '#', ' ', ' ', '#' },
+    { '#', '#', '#', '#' },
+    { '#', ' ', ' ', '#' } },
+  // X
+  {
+    { '#', ' ', ' ', '#' },
+    { ' ', '#', '#', ' ' },
+    { ' ', ' ', '#', ' ' },
+    { ' ', '#', '#', ' ' },
+    { '#', ' ', ' ', '#' } },
+  // Y
+  {
+    { '#', ' ', ' ', '#' },
+    { ' ', '#', '#', ' ' },
+    { ' ', ' ', '#', ' ' },
+    { ' ', ' ', '#', ' ' },
+    { ' ', ' ', '#', ' ' } },
+  // Z
+  {
+    { '#', '#', '#', '#' },
+    { ' ', ' ', ' ', '#' },
+    { ' ', ' ', '#', ' ' },
+    { ' ', '#', ' ', ' ' },
+    { '#', '#', '#', '#' } }
+};
+
 float mapFloat(float x, float in_min, float in_max, float out_min, float out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
@@ -286,7 +469,7 @@ void displayNumber(int number, int xPos, int yPos) {
         dimShiftPixelXY(currentX, currentY + height, 3);
       }
     }
-    
+
     //DIGIT display
     for (int i = 0; i < 5; i++) {
       for (int j = 0; j < 4; j++) {
@@ -303,20 +486,44 @@ void displayNumber(int number, int xPos, int yPos) {
   }
 }
 
+void displayText(const char* text, int xPos, int yPos) {
+    int x = xPos;
+    int y = yPos;
+    int charWidth = 4; // Width of a character in the 5x4 grid
+    int charHeight = 5; // Height of a character
+    int spacing = 1; // Space between characters
+    int textLength = strlen(text); // Get the length of the text
+    int textWidth = textLength * (charWidth + spacing) - spacing; // Calculate total width of the text
 
+    // Optional: dim frame around the text for visibility
+    dimFrame(x - 1, y - 1, textWidth + 2, charHeight + 2, 4);
+    dimFrame(x - 1, y - 1, textWidth + 4, charHeight + 4, 2);
+    dimFrame(x - 2, y - 2, textWidth + 6, charHeight + 6, 1);
 
-
-
-
-
-
-
-
-
-
-
-
-
+    for (int k = 0; k < textLength; k++) {
+        char ch = text[k];
+        int ascii = (int)ch;
+        // Convert ASCII to index in alphabet array: 'A' = 65, 'Z' = 90, 'a' = 97, 'z' = 122
+        // Adjust for lowercase and validate character is in alphabet
+        int index = (ascii >= 'A' && ascii <= 'Z') ? ascii - 'A' : 
+                    (ascii >= 'a' && ascii <= 'z') ? ascii - 'a' : -1;
+        if (index != -1) {
+            // LETTER display
+            for (int i = 0; i < charHeight; i++) {
+                for (int j = 0; j < charWidth; j++) {
+                    int currentX = x + j;
+                    int currentY = y + i;
+                    if (alphabet[index][i][j] == '#') {
+                        setPixelXY(currentX, currentY, 0, 30, 50); // Display the pixel as part of the letter
+                    } else {
+                        setPixelXY(currentX, currentY, 0, 0, 0); // Optionally clear the pixel for spacing
+                    }
+                }
+            }
+        }
+        x += charWidth + spacing; // Move the x position for the next character
+    }
+}
 
 
 /////////
@@ -351,3 +558,6 @@ void testCursor() {
     delay(100);
   }
 }
+
+
+
