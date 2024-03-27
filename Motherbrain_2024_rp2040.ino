@@ -198,6 +198,7 @@ byte lastEncoded = 0;
 #define SEQUENCE_FLAG 123
 
 void setup() {
+  
   //FAKE EEPROM IN FLASH
   EEPROM.begin(EEPROM_SIZE);
 
@@ -275,6 +276,11 @@ void setup() {
   currentSeq = 7;
   recallSequenceFromEEPROM(3, ALLTRACKS);
   currentSeq = 0;
+  if(testColor == 0){
+    displayText("STA",0,2);
+  } else {
+    displayText("USB",0,2);
+  }
 }
 
 bool runClock = true;                         //run internal clock
@@ -355,7 +361,7 @@ void loop() {  // the whole loop uses max 1040us, idles at 400 for cycles withou
     displayNumber(debugNum, -1, 2);
   }
 
-  //displayText("USB",0,0);
+  
 
   fastLEDUpdateCounter++;
   fastLEDUpdateCounter = fastLEDUpdateCounter % 16;  // this MASSIVELY inproves performance, %16 gives me approx 140FPS

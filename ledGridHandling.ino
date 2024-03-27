@@ -514,9 +514,9 @@ void displayText(const char* text, int xPos, int yPos) {
                     int currentX = x + j;
                     int currentY = y + i;
                     if (alphabet[index][i][j] == '#') {
-                        setPixelXY(currentX, currentY, 0, 30, 50); // Display the pixel as part of the letter
+                        addSparkle(currentX, currentY, 0, 0, 0,2000); // Display the pixel as part of the letter
                     } else {
-                        setPixelXY(currentX, currentY, 0, 0, 0); // Optionally clear the pixel for spacing
+                        //setPixelXY(currentX, currentY, 0, 0, 0); // Optionally clear the pixel for spacing
                     }
                 }
             }

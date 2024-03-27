@@ -58,7 +58,7 @@ public:
     }
 };
 
-const int MAX_SPARKLES = 50;
+const int MAX_SPARKLES = 100;
 Sparkle sparkles[MAX_SPARKLES];
 int startIdx = 0;
 int endIdx = 0;
