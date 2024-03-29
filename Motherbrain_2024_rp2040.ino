@@ -10,14 +10,31 @@
 /*
 
 things to add:
-  - feedback messages
-  - tell me if save recall worked or not
-  - transpose
+  - tell me if save recall worked or not // or just make sure to init all saves add a section in setup that checks if loading a sequence fails, if it does, just write prestored seqs
+  - transpose (from overview page, hold track and twiddle)
+  - hold multiple solos at once and unmute everything when nothing is soloed
+  - shift sequence left right
   - chain sequences (add own chain page ?)
   - change MIDI clock input subdivision
-  - MIDI CLOCK OUT, all clock stuff should be rewritten to measure 24ths of a step?
   - Randomize
-  - hold multiple solos at once and unmute everything when nothing is soloed
+  
+functions i need to be able to toggle on overview page:
+  - select
+  - mute
+  - solo
+  - transpose
+  - shift left/right
+  - save
+  - clear
+  - randomize
+  - slot 12345678
+  - 
+
+functions i need to be able to toggle on setup page:
+  - midi out channel per track
+  - USB clock out
+  - HW MIDI clock out
+  - 
 */
 
 int debugNum = 0;  // Variable to store a number that will br displaye on the scrim
