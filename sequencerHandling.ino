@@ -133,7 +133,7 @@ void saveCurrentSequenceToEEPROM(int slot, int trackToSave) {  // 8 saves all tr
 }
 
 void recallSequenceFromEEPROM(int slot, int trackToLoad) {  // 8 LOADS ALL TRACKS
-  if (slot >= 0 && slot < 4) {                              // make sure we arent trying to load outtside of memory
+  if (slot >= 0 && slot < 4) {                              // make sure we arent trying to load outside of memory
   EEPROM.begin(EEPROM_SIZE);
     uint32_t address = slot * (SEQUENCE_SIZE + 1);          // +1 for the flag
     //seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS]
@@ -395,7 +395,7 @@ void radioSendClockTick() {
 
 void saveCurrentSequenceToFile(int slot, int trackToSave) {
   debugln("save");
-  if (slot >= 0 && slot < 4) {
+  if (slot >= 0 && slot < 8) {
     LittleFS.begin();
     String filename = "/seq" + String(slot) + ".dat";  // Create a filename for each slot
     File file = LittleFS.open(filename, "w");  // Open the file for writing
@@ -427,7 +427,7 @@ void saveCurrentSequenceToFile(int slot, int trackToSave) {
 }
 
 void recallSequenceFromFile(int slot, int trackToLoad) {
-  if (slot >= 0 && slot < 4) { // Ensure valid slot number
+  if (slot >= 0 && slot < 8) { // Ensure valid slot number
     LittleFS.begin();
     String filename = "/seq" + String(slot) + ".dat"; // Construct filename for slot
     File file = LittleFS.open(filename, "r"); // Open file for reading

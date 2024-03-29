@@ -83,7 +83,7 @@ byte fadedTrackColors[8][3] = {
 int counter24ppqn = -1;
 
 int tempo = 120;
-int oldTempo = 120;
+int oldTempo = 0;
 
 // USB MIDI object
 Adafruit_USBD_MIDI usb_midi;
@@ -165,6 +165,11 @@ bool oldButtStates2D[GRIDSTEPS][GRIDROWS];
 bool ledGridState2D[GRIDSTEPS][GRIDROWS];
 CHSV ledColState2D[GRIDSTEPS][GRIDROWS];
 
+
+//ledGrid
+int textPosX = 0;
+unsigned long lastShow = 0;
+unsigned int scrollTimer = 0;
 
 void initLedGridState() {
   for (byte x = 0; x < GRIDSTEPS; x++) {
@@ -277,10 +282,11 @@ void setup() {
   recallSequenceFromEEPROM(3, ALLTRACKS);
   currentSeq = 0;
   if(testColor == 0){
-    displayText("STA",0,2);
+    //displayText("STANDALONE",0,2,true);
   } else {
-    displayText("USB",0,2);
+    //displayText("USB",0,2,true);
   }
+  scrollTimer = millis();
 }
 
 bool runClock = true;                         //run internal clock
@@ -301,8 +307,6 @@ void handleUsbMidiClockTicks() {
 }
 
 
-
-unsigned long lastShow = 0;
 byte fastLEDUpdateCounter = 0;
 byte mode = overviewMode;
 void loop() {  // the whole loop uses max 1040us, idles at 400 for cycles without FastLED.show(), and 500 for cycles with FastLED.show()
@@ -361,6 +365,12 @@ void loop() {  // the whole loop uses max 1040us, idles at 400 for cycles withou
     displayNumber(debugNum, -1, 2);
   }
 
+  
+  textPosX = millis()-scrollTimer;
+  textPosX = textPosX>>7;
+  textPosX = textPosX*-1;
+
+  displayText("I LOVE AASA MICHAL", textPosX + 15, 1,false);
   
 
   fastLEDUpdateCounter++;

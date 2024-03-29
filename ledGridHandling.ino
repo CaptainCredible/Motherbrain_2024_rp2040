@@ -486,44 +486,71 @@ void displayNumber(int number, int xPos, int yPos) {
   }
 }
 
-void displayText(const char* text, int xPos, int yPos) {
-    int x = xPos;
-    int y = yPos;
-    int charWidth = 4; // Width of a character in the 5x4 grid
-    int charHeight = 5; // Height of a character
-    int spacing = 1; // Space between characters
-    int textLength = strlen(text); // Get the length of the text
-    int textWidth = textLength * (charWidth + spacing) - spacing; // Calculate total width of the text
 
-    // Optional: dim frame around the text for visibility
-    dimFrame(x - 1, y - 1, textWidth + 2, charHeight + 2, 4);
-    dimFrame(x - 1, y - 1, textWidth + 4, charHeight + 4, 2);
-    dimFrame(x - 2, y - 2, textWidth + 6, charHeight + 6, 1);
+void displayText(const char* text, int xPos, int yPos, bool ping) {
+  int x = xPos;
+  int y = yPos;
+  int charWidth = 4;                                             // Width of a character in the 5x4 grid
+  int charHeight = 5;                                            // Height of a character
+  int spacing = 1;                                               // Space between characters
+  int textLength = strlen(text);                                 // Get the length of the text
+  int textWidth = textLength * (charWidth + spacing) - spacing;  // Calculate total width of the text
 
-    for (int k = 0; k < textLength; k++) {
-        char ch = text[k];
-        int ascii = (int)ch;
-        // Convert ASCII to index in alphabet array: 'A' = 65, 'Z' = 90, 'a' = 97, 'z' = 122
-        // Adjust for lowercase and validate character is in alphabet
-        int index = (ascii >= 'A' && ascii <= 'Z') ? ascii - 'A' : 
-                    (ascii >= 'a' && ascii <= 'z') ? ascii - 'a' : -1;
-        if (index != -1) {
-            // LETTER display
-            for (int i = 0; i < charHeight; i++) {
-                for (int j = 0; j < charWidth; j++) {
-                    int currentX = x + j;
-                    int currentY = y + i;
-                    if (alphabet[index][i][j] == '#') {
-                        addSparkle(currentX, currentY, 0, 0, 0,2000); // Display the pixel as part of the letter
-                    } else {
-                        //setPixelXY(currentX, currentY, 0, 0, 0); // Optionally clear the pixel for spacing
-                    }
-                }
-            }
+  // Optional: dim frame around the text for visibility
+  dimFrame(x - 1, y - 1, textWidth + 2, charHeight + 2, 4);
+  dimFrame(x - 1, y - 1, textWidth + 4, charHeight + 4, 2);
+  dimFrame(x - 2, y - 2, textWidth + 6, charHeight + 6, 1);
+
+  for (int k = 0; k < textLength; k++) {
+    char ch = text[k];
+    
+    if (ch == ' ') { // Check if the character is a space
+      // Clear the space for the 'space' character
+      for (int i = 0; i < charHeight; i++) {
+        for (int j = 0; j < charWidth; j++) {
+          setPixelXY(x + j, y + i, 0, 0, 0);
         }
-        x += charWidth + spacing; // Move the x position for the next character
+      }
+      x += charWidth; // Move x position for the next character, including space width
+      continue; // Skip the rest of the loop and continue with the next character
     }
+
+    int ascii = (int)ch;
+    // Convert ASCII to index in alphabet array: 'A' = 65, 'Z' = 90, 'a' = 97, 'z' = 122
+    int index = (ascii >= 'A' && ascii <= 'Z') ? ascii - 'A' : (ascii >= 'a' && ascii <= 'z') ? ascii - 'a' : -1;
+    if (index != -1) {
+      // LETTER display
+      for (int i = 0; i < charHeight; i++) {
+        for (int j = 0; j < charWidth; j++) {
+          int currentX = x + j;
+          int currentY = y + i;
+          if (alphabet[index][i][j] == '#') {
+            if (ping) {
+              addSparkle(currentX, currentY, 0, 0, 0, 2000);
+            } else {
+              setPixelXY(currentX, currentY, 100, 100, 100);  // show pixel
+            }
+          } else {
+            setPixelXY(currentX, currentY, 0, 0, 0);  // Clear the pixel
+          }
+        }
+      }
+    }
+    // Clear the spacing strip between characters, except after the last character or space
+    if (k < textLength - 1) {
+        x += charWidth; // Adjust x for the width of the character just processed
+        for (int i = 0; i < charHeight; i++) {
+            setPixelXY(x, y + i, 0, 0, 0);  // Clear the pixels for spacing
+        }
+        x += spacing;  // Include the spacing for the next character position
+    } else {
+        // For the last character, just move the position without clearing
+        x += charWidth + spacing;
+    }
+  }
 }
+
+
 
 
 /////////
@@ -558,6 +585,3 @@ void testCursor() {
     delay(100);
   }
 }
-
-
-
