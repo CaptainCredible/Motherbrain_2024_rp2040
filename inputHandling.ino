@@ -58,14 +58,14 @@ void instSeqModeButts(byte x, byte y) {
           //debug("save instrument to slot ");
           //debugln(slotToSaveTo);
           if (buttStates2D[12][7] == true) {  //is the save button pressed?
-            saveCurrentSequenceToEEPROM(slotSelect, currentInst);
+            saveCurrentSequenceToFile(slotSelect, currentInst);
           } else {
             if (!utilState) {
               //debug("load this instrument from slot ");
-              recallSequenceFromEEPROM(slotSelect, currentInst);
+              recallSequenceFromFile(slotSelect, currentInst);
             } else {
               //debug("load all instruments from slot ");
-              recallSequenceFromEEPROM(slotSelect, ALLTRACKS);
+              recallSequenceFromFile(slotSelect, ALLTRACKS);
             }
           }
         }
@@ -168,7 +168,6 @@ void overviewModeButts(byte x, byte y) {
       case 6:
       case 5:
       case 4:
-        break;
       case 3:
       case 2:
       case 1:
@@ -336,6 +335,9 @@ unsigned int oldKnobVal = 0;
 //bool oldUtilState = false
 void scanButtsNKnobs() {
   shiftState = !digitalRead(SHIFTPIN);
+  if(shiftState){
+    scrollTimer = millis();
+  }
   rotarySwitchState = !digitalRead(swPin);
   utilState = !digitalRead(UTILPIN);
   if (utilState != oldUtilState) {

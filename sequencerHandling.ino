@@ -394,29 +394,27 @@ void radioSendClockTick() {
 
 
 void saveCurrentSequenceToFile(int slot, int trackToSave) {
-  debugln("save");
   if (slot >= 0 && slot < 8) {
     LittleFS.begin();
-    String filename = "/seq" + String(slot) + ".dat";  // Create a filename for each slot
-    File file = LittleFS.open(filename, "w");  // Open the file for writing
+    String filename = "/seq" + String(slot) + ".dat";
+    // Open the file in read+write mode. Create it if it doesn't exist.
+    File file = LittleFS.open(filename, "r+");
+    if (!file) {
+      // If file does not exist, create it by opening in write mode.
+      file = LittleFS.open(filename, "w");
+    }
     if (file) {
-      for (int i = 0; i < 8; i++) {  // Iterate over tracks
-        for (int j = 0; j < 16; j++) {  // Iterate over steps
-          if (trackToSave == i || trackToSave == ALLTRACKS) {
+      for (int i = 0; i < 8; i++) {
+        if (trackToSave == i || trackToSave == ALLTRACKS) {
+          // Calculate the position in the file where this track's data starts
+          file.seek(i * 16 * sizeof(uint64_t), SeekSet);
+          for (int j = 0; j < 16; j++) {
             uint64_t truncatedStep = seqMatrix[currentSeq][i][j];
-            file.write((byte*)&truncatedStep, sizeof(truncatedStep));  // Write each step as binary
+            file.write((byte*)&truncatedStep, sizeof(truncatedStep));
           }
         }
       }
-      file.close();  // Close the file to save changes
-      debug("saved instrument ");
-      if (trackToSave == ALLTRACKS) {
-        debug("ALL TRACKS");
-      } else {
-        debug(trackToSave);
-      }
-      debug(" to slot ");
-      debugln(slot);
+      file.close();
     } else {
       debugln("File open failed");
     }
@@ -425,6 +423,7 @@ void saveCurrentSequenceToFile(int slot, int trackToSave) {
     debugln("Invalid slot number");
   }
 }
+
 
 void recallSequenceFromFile(int slot, int trackToLoad) {
   if (slot >= 0 && slot < 8) { // Ensure valid slot number

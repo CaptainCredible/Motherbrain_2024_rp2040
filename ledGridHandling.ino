@@ -526,7 +526,7 @@ void displayText(const char* text, int xPos, int yPos, bool ping) {
           int currentY = y + i;
           if (alphabet[index][i][j] == '#') {
             if (ping) {
-              addSparkle(currentX, currentY, 0, 0, 0, 2000);
+              addSparkle(currentX, currentY, 0, 0, 0, 1000);
             } else {
               setPixelXY(currentX, currentY, 100, 100, 100);  // show pixel
             }
@@ -583,5 +583,41 @@ void testCursor() {
     drawCursor(i);
     FastLED.show();
     delay(100);
+  }
+}
+
+void setMessage(const char* message) {
+  strncpy(scrollText, message, sizeof(scrollText) - 1); // Copy the incoming message to the global variable
+  scrollText[sizeof(scrollText) - 1] = '\0'; // Ensure null-termination
+  scrollTimer = millis(); // Reset the timer at the start of a new message
+  isScrolling = true; // Enable scrolling
+}
+
+void updateScroll() {
+  if (!isScrolling) return; // Exit if scrolling is not enabled
+
+  long textPosX = millis() - scrollTimer; // Calculate the elapsed time since the scrolling started
+  textPosX = textPosX >> scrollSpeed; // Apply the scrolling speed
+  textPosX = textPosX * -1; // Invert the direction for leftward scrolling
+
+  displayText(scrollText, textPosX + 15, 1, false); // Adjust +15 to set starting offset as needed
+
+  // Optionally, stop scrolling after the text has moved off screen
+  int textLength = strlen(scrollText)+4; // add 4 pretend characters to make it scroll all the way
+  int charWidth = 4; // Width of a character in the 5x4 grid
+  int spacing = 1; // Space between characters
+  int screenEnd = -(textLength * (charWidth + spacing)); // When to stop scrolling
+  if (textPosX < screenEnd) {
+    isScrolling = false; // Stop scrolling when the end of the message has passed
+  }
+}
+
+
+void initLedGridState() {
+  for (byte x = 0; x < GRIDSTEPS; x++) {
+    for (byte y = 0; y < GRIDROWS; y++) {
+      ledGridState2D[x][y] = false;
+      ledColState2D[x][y] = CHSV(0, 0, 0);
+    }
   }
 }

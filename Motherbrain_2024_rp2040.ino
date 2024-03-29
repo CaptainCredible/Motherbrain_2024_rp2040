@@ -83,7 +83,7 @@ byte fadedTrackColors[8][3] = {
 int counter24ppqn = -1;
 
 int tempo = 120;
-int oldTempo = 0;
+int oldTempo = 120;
 
 // USB MIDI object
 Adafruit_USBD_MIDI usb_midi;
@@ -169,16 +169,12 @@ CHSV ledColState2D[GRIDSTEPS][GRIDROWS];
 //ledGrid
 int textPosX = 0;
 unsigned long lastShow = 0;
-unsigned int scrollTimer = 0;
+char scrollText[256] = ""; // Assuming max text length of 255 characters + null terminator
+unsigned long scrollTimer = 0;
+int scrollSpeed = 7; // The speed of scrolling, higher is slower
+bool isScrolling = false;
 
-void initLedGridState() {
-  for (byte x = 0; x < GRIDSTEPS; x++) {
-    for (byte y = 0; y < GRIDROWS; y++) {
-      ledGridState2D[x][y] = false;
-      ledColState2D[x][y] = CHSV(0, 0, 0);
-    }
-  }
-}
+
 
 unsigned long debugTimer;
 void debugTimerStart() {
@@ -230,10 +226,10 @@ void setup() {
   pinMode(interruptPin, OUTPUT);  // to interrupt microbit
   digitalWrite(interruptPin, LOW);
 
-//MIDI
-#if defined(ARDUINO_ARCH_MBED) && defined(ARDUINO_ARCH_RP2040)
+  //MIDI
+  #if defined(ARDUINO_ARCH_MBED) && defined(ARDUINO_ARCH_RP2040)
   TinyUSB_Device_Init(0);
-#endif
+  #endif
   //usb_midi.setStringDescriptor("mthr");
   Serial1.setRX(1);
   Serial1.setTX(0);
@@ -259,34 +255,36 @@ void setup() {
   while (!TinyUSBDevice.mounted()) {
     delay(1);                           // Wait for 1 millisecond
     if (millis() - startTime > 1000) {  // Check if 1000ms have passed
-      break;                            // Exit the loop if more than 1000ms have passed
       testColor = 0;
+      break;                            // Exit the loop if more than 1000ms have passed
     }
   }
   testSetXY(testColor);
   currentSeq = 0;
-  recallSequenceFromEEPROM(0, ALLTRACKS);
+  recallSequenceFromFile(0, ALLTRACKS);
   currentSeq = 1;
-  recallSequenceFromEEPROM(1, ALLTRACKS);
+  recallSequenceFromFile(1, ALLTRACKS);
   currentSeq = 2;
-  recallSequenceFromEEPROM(2, ALLTRACKS);
+  recallSequenceFromFile(2, ALLTRACKS);
   currentSeq = 3;
-  recallSequenceFromEEPROM(3, ALLTRACKS);
+  recallSequenceFromFile(3, ALLTRACKS);
   currentSeq = 4;
-  recallSequenceFromEEPROM(0, ALLTRACKS);
+  recallSequenceFromFile(4, ALLTRACKS);
   currentSeq = 5;
-  recallSequenceFromEEPROM(1, ALLTRACKS);
+  recallSequenceFromFile(5, ALLTRACKS);
   currentSeq = 6;
-  recallSequenceFromEEPROM(2, ALLTRACKS);
+  recallSequenceFromFile(6, ALLTRACKS);
   currentSeq = 7;
-  recallSequenceFromEEPROM(3, ALLTRACKS);
+  recallSequenceFromFile(7, ALLTRACKS);
   currentSeq = 0;
   if(testColor == 0){
-    //displayText("STANDALONE",0,2,true);
+    setMessage("STANDALONE");
+    scrollSpeed = 6;
   } else {
-    //displayText("USB",0,2,true);
+    setMessage("USB");
+    scrollSpeed = 6;
   }
-  scrollTimer = millis();
+  tempoMicros24 = tempoToMicros24(tempo);
 }
 
 bool runClock = true;                         //run internal clock
@@ -362,16 +360,17 @@ void loop() {  // the whole loop uses max 1040us, idles at 400 for cycles withou
 
   if (rotaryPushState) {
     //setPixelXY(0, 7, 100, 0, 0);  // HERE!!!!
-    displayNumber(debugNum, -1, 2);
+    //displayNumber(debugNum, -1, 2);
   }
 
-  
+  updateScroll();
+  /*  
   textPosX = millis()-scrollTimer;
   textPosX = textPosX>>7;
   textPosX = textPosX*-1;
 
-  displayText("I LOVE AASA MICHAL", textPosX + 15, 1,false);
-  
+  displayText("text", textPosX + 15, 1,false);
+  */
 
   fastLEDUpdateCounter++;
   fastLEDUpdateCounter = fastLEDUpdateCounter % 16;  // this MASSIVELY inproves performance, %16 gives me approx 140FPS
