@@ -480,3 +480,28 @@ void transpose(byte seq, byte track, bool directionUp) {
   }
 }
 
+void slip(byte seq, byte track, bool directionRight) {
+  // Temporary storage to hold the steps before rearranging
+  uint64_t tempSteps[16];
+  
+  // Copy the current sequence of steps into temporary storage
+  for (byte i = 0; i < 16; i++) {
+    tempSteps[i] = seqMatrix[seq][track][i];
+  }
+  
+  for (byte i = 0; i < 16; i++) {
+    // Calculate new position based on the direction of the shift
+    byte newPos;
+    if (directionRight) {
+      // If shifting right, wrap around by subtracting from the total length
+      newPos = (i + 1) % 16;
+    } else {
+      // If shifting left, wrap around by adding to the total length
+      newPos = (i + 15) % 16;
+    }
+    
+    // Assign the step from its original position to the new position
+    seqMatrix[seq][track][newPos] = tempSteps[i];
+  }
+}
+

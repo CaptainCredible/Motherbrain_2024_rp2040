@@ -77,9 +77,6 @@ void instSeqModeButts(byte x, byte y) {
       case 7:
         break;
       case 8:  //clear
-        if (y == 7) {
-          clearTrack(currentSeq, currentInst);
-        }
         break;
 
       case 9:  //randomize
@@ -93,6 +90,9 @@ void instSeqModeButts(byte x, byte y) {
         break;
 
       case 12:
+        if (y == 7) {
+          clearTrack(currentSeq, currentInst);
+        }
         break;
 
       case 13:  //solo
@@ -108,8 +108,8 @@ void instSeqModeButts(byte x, byte y) {
         addSporkle(13, y, 30, 30, 30, 0, 0, 0, 500);
         addSporkle(12, y, 5, 5, 5, 0, 0, 0, 500);
 
-        triggerMidiNote((7-y) + viewOffset, currentInst);
-        bitSet(midiTracksBuffer16x8[currentInst - 1], (7-y) + viewOffset);  //set corresponding bit in corresponding uint16_t in the buffer to be sent
+        triggerMidiNote((7 - y) + viewOffset, currentInst);
+        bitSet(midiTracksBuffer16x8[currentInst - 1], (7 - y) + viewOffset);  //set corresponding bit in corresponding uint16_t in the buffer to be sent
         waitingForMIDITimeOut = false;
         //debugln("usbmidi Timed Out");
         sendUsbMidiPackage();
@@ -121,7 +121,7 @@ void instSeqModeButts(byte x, byte y) {
     byte invertedOffsetY = invertedY + viewOffset;
     //debug("toggling note ");
     //debug(invertedOffsetY);
-    toggleNote(currentSeq, currentInst, x, invertedOffsetY);      //toggle the note stored in seq 0, intrument 0, step x, note y
+    toggleNote(currentSeq, currentInst, x, invertedOffsetY);  //toggle the note stored in seq 0, intrument 0, step x, note y
     //debug(" it is now ");
     //debugln(getNote(currentSeq, currentInst, x, invertedOffsetY));
     if (!getNote(currentSeq, currentInst, x, invertedOffsetY)) {  //if we just turned this note off
@@ -140,28 +140,29 @@ void overviewModeButts(byte x, byte y) {
   if (shiftState) {
     switch (x) {
       case 15:
-      break;
-      case 14:
-      break;
-      case 13:
-      break;
-      case 12:
-      break;
-      case 11:
-      break;
-      case 10:
-      break;
-      case 9:
-        randomize(currentSeq, y);
-        ////debug("randomized seq ");
-        ////debugln(y);
         break;
-      case 8:  // clear
+      case 14:
+        break;
+      case 13:
+        break;
+      case 12:  //clear
         if (utilState) {
           if (y == 7) clearInst(currentSeq, ALLTRACKS);
         } else {
           clearInst(currentSeq, y);
         }
+        break;
+      case 11:
+        break;
+      case 10:
+        break;
+      case 9:
+        randomize(currentSeq, y);
+        ////debug("randomized seq ");
+        ////debugln(y);
+        break;
+      case 8:
+
 
         break;
       case 7:
@@ -335,7 +336,7 @@ unsigned int oldKnobVal = 0;
 //bool oldUtilState = false
 void scanButtsNKnobs() {
   shiftState = !digitalRead(SHIFTPIN);
-  if(shiftState){
+  if (shiftState) {
     scrollTimer = millis();
   }
   rotarySwitchState = !digitalRead(swPin);
@@ -416,18 +417,18 @@ int tempoToMillis(int bpm) {
 }
 
 int tempoToMicros(int bpm) {
-  unsigned int tempMicros = round(60000000.0 / bpm); // Adjusted for microseconds
-  tempMicros = tempMicros >> 2; // This operation remains the same, as it's independent of the unit.
+  unsigned int tempMicros = round(60000000.0 / bpm);  // Adjusted for microseconds
+  tempMicros = tempMicros >> 2;                       // This operation remains the same, as it's independent of the unit.
   return tempMicros;
 }
 
 int tempoToMicros24(int bpm) {
   // Calculate the number of microseconds for one beat
   unsigned int tempMicros = round(60000000.0 / bpm);
-  
+
   // Divide by 24 to get the time for one MIDI Clock pulse
   tempMicros = tempMicros / 24;
-  
+
   return tempMicros;
 }
 
@@ -437,8 +438,7 @@ void handleRotaryPush() {  //rotaryclick
   if (swState != swLastState) {
     if (millis() > lastSwTime + swDebounceTime) {
       rotaryPushState = !swState;
-      if(rotaryPushState){
-
+      if (rotaryPushState) {
       }
       //debugln(swState);
       lastSwTime = millis();
@@ -489,39 +489,51 @@ void drawRotaryMasterCounterOverSerial() {
 
 // add transpose here!
 void rotaryMove(int moveAmount) {
-  if(shiftState && mode == overviewMode){
-    if(rotaryPushState){
+  if (shiftState && mode == overviewMode) {
+    if (rotaryPushState) {
       tempo = tempo + moveAmount;
     } else {
       tempo = tempo + moveAmount * 10;
     }
-  } else {
+  } else if(!buttStates2D[10][7]){ // if slip button is not held in
     viewOffset += moveAmount;
     if (viewOffset > maxViewOffset) viewOffset = maxViewOffset;
     if (viewOffset < 0) viewOffset = 0;
   }
+  bool directionBool = false;
+  if (moveAmount > 0) {
+    directionBool = true;
+  }
+  // check if slip button is held in
+  for (byte i = 0; i < 8; i++) {
+    if (buttStates2D[10][i]) {  // slip
+      if (mode == overviewMode) {
+        slip(currentSeq, i, directionBool);
+      } else {
+        if (i == 7) {
+          slip(currentSeq, currentInst, directionBool);
+        }
+      }
+    }
+  }
 
   //check if a transpose button is held in
-  for(byte i = 0; i<16; i++){
-    bool directionBool = false;
-    if(moveAmount>0){
-      directionBool = true;
-    }
-    if(buttStates2D[11][i]){ // transpose
-      if(mode == overviewMode){
+  for (byte i = 0; i < 8; i++) {
+    if (buttStates2D[11][i]) {  // transpose
+      if (mode == overviewMode) {
         transpose(currentSeq, i, directionBool);
       } else {
-        if(shiftState){
-          if(i==7){
-            transpose(currentSeq, currentInst, directionBool);  
+        if (shiftState) {
+          if (i == 7) {
+            transpose(currentSeq, currentInst, directionBool);
           }
         }
       }
     }
   }
 
-  if(transposeState){
-    if(moveAmount > 0){
+  if (transposeState) {
+    if (moveAmount > 0) {
       transpose(currentSeq, transposeTrack, true);
     } else {
       transpose(currentSeq, transposeTrack, true);

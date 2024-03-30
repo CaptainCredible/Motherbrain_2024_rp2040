@@ -11,9 +11,7 @@
 
 things to add:
   - tell me if save recall worked or not // or just make sure to init all saves add a section in setup that checks if loading a sequence fails, if it does, just write prestored seqs
-  - transpose (from overview page, hold track and twiddle)
   - hold multiple solos at once and unmute everything when nothing is soloed
-  - shift sequence left right
   - chain sequences (add own chain page ?)
   - change MIDI clock input subdivision
   - Randomize
