@@ -33,14 +33,11 @@ void setPixelXY(int Xcoord, int Ycoord, byte R, byte G, byte B) {
   }
 }
 
-int gridBrightness = 6;  // shift amount
+int gridBrightness = 5;  // shift amount
 
 void drawHelpers() {
   for (byte i = 0; i < GRIDSTEPS >> 2; i++) {
     for (byte j = 0; j < GRIDROWS; j++) {
-      //trackColors[8][3]
-      //softSetPixelXY(i << 2, j, 2, 0, 0);
-
       softSetPixelXY(i << 2, j, currentInstCol[0] >> gridBrightness, currentInstCol[1] >> gridBrightness, currentInstCol[2] >> gridBrightness);
     }
   }

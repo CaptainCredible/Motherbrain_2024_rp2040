@@ -120,8 +120,10 @@ unsigned long tempoMicros = 100000;
 unsigned long tempoMicros24 = 4167;
 uint16_t numberToDisplay = 0;
 int viewOffset = 0;
-//byte maxViewOffset = 7;
 byte maxViewOffset = stepDataSize - 9;
+bool transposeState = false;
+byte transposeTrack = 0;
+
 
 //led related
 byte cycle = 0;

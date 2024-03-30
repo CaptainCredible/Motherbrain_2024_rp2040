@@ -83,13 +83,13 @@ void instSeqModeButts(byte x, byte y) {
         break;
 
       case 9:  //randomize
-        randomize(currentSeq, currentInst);
+        //randomize(currentSeq, currentInst);
         break;
 
       case 10:
         break;
 
-      case 11:  // nuke
+      case 11:
         break;
 
       case 12:
@@ -486,8 +486,10 @@ void drawRotaryMasterCounterOverSerial() {
   //debugln();
 }
 
+
+// add transpose here!
 void rotaryMove(int moveAmount) {
-  if(shiftState){
+  if(shiftState && mode == overviewMode){
     if(rotaryPushState){
       tempo = tempo + moveAmount;
     } else {
@@ -497,6 +499,33 @@ void rotaryMove(int moveAmount) {
     viewOffset += moveAmount;
     if (viewOffset > maxViewOffset) viewOffset = maxViewOffset;
     if (viewOffset < 0) viewOffset = 0;
+  }
+
+  //check if a transpose button is held in
+  for(byte i = 0; i<16; i++){
+    bool directionBool = false;
+    if(moveAmount>0){
+      directionBool = true;
+    }
+    if(buttStates2D[11][i]){ // transpose
+      if(mode == overviewMode){
+        transpose(currentSeq, i, directionBool);
+      } else {
+        if(shiftState){
+          if(i==7){
+            transpose(currentSeq, currentInst, directionBool);  
+          }
+        }
+      }
+    }
+  }
+
+  if(transposeState){
+    if(moveAmount > 0){
+      transpose(currentSeq, transposeTrack, true);
+    } else {
+      transpose(currentSeq, transposeTrack, true);
+    }
   }
 
   if (tempo > 999) {

@@ -462,3 +462,21 @@ void recallSequenceFromFile(int slot, int trackToLoad) {
     debugln("Invalid slot number");
   }
 }
+
+void transpose(byte seq, byte track, bool directionUp) {
+  for (byte stepSelect = 0; stepSelect < 16; stepSelect++) {
+    // Retrieve the current step data
+    uint64_t stepData = seqMatrix[seq][track][stepSelect];
+    
+    if (directionUp) {
+      // Rotate left: Take the leftmost bit and move it to the rightmost position
+      uint64_t rotatedBit = (stepData & 0x8000000000000000) >> 63; // Extract leftmost bit and position it at the rightmost
+      seqMatrix[seq][track][stepSelect] = (stepData << 1) | rotatedBit; // Shift left and add the rotated bit on the right
+    } else {
+      // Rotate right: Take the rightmost bit and move it to the leftmost position
+      uint64_t rotatedBit = (stepData & 0x1) << 63; // Extract rightmost bit and position it at the leftmost
+      seqMatrix[seq][track][stepSelect] = (stepData >> 1) | rotatedBit; // Shift right and add the rotated bit on the left
+    }
+  }
+}
+
