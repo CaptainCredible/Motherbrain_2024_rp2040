@@ -53,7 +53,6 @@ void instSeqModeButts(byte x, byte y) {
           displayNumber(x, 4, 3);
         }
         if (y == 7) {  //bottom row save buttons
-
           byte slotToSaveTo = x;
           //debug("save instrument to slot ");
           //debugln(slotToSaveTo);
@@ -109,9 +108,9 @@ void instSeqModeButts(byte x, byte y) {
         addSporkle(12, y, 5, 5, 5, 0, 0, 0, 500);
 
         triggerMidiNote((7 - y) + viewOffset, currentInst);
-        bitSet(midiTracksBuffer16x8[currentInst - 1], (7 - y) + viewOffset);  //set corresponding bit in corresponding uint16_t in the buffer to be sent
+        bitSet(midiTracksBuffer16x8[currentInst], (7 - y) + viewOffset);  //set corresponding bit in corresponding uint16_t in the buffer to be sent
         waitingForMIDITimeOut = false;
-        //debugln("usbmidi Timed Out");
+        
         sendUsbMidiPackage();
 
         break;
