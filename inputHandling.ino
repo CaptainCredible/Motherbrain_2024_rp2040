@@ -56,7 +56,7 @@ void instSeqModeButts(byte x, byte y) {
           byte slotToSaveTo = x;
           //debug("save instrument to slot ");
           //debugln(slotToSaveTo);
-          if (buttStates2D[12][7] == true) {  //is the save button pressed?
+          if (buttStates2D[13][7] == true) {  //is the save button pressed?
             saveCurrentSequenceToFile(slotSelect, currentInst);
           } else {
             if (!utilState) {
@@ -110,7 +110,7 @@ void instSeqModeButts(byte x, byte y) {
         triggerMidiNote((7 - y) + viewOffset, currentInst);
         bitSet(midiTracksBuffer16x8[currentInst], (7 - y) + viewOffset);  //set corresponding bit in corresponding uint16_t in the buffer to be sent
         waitingForMIDITimeOut = false;
-        
+
         sendUsbMidiPackage();
 
         break;
@@ -132,145 +132,96 @@ void instSeqModeButts(byte x, byte y) {
   }
 }
 
-
+const byte muteSoloRow = 14;
+const byte selectPreviewRow = 15;
 void overviewModeButts(byte x, byte y) {
   byte trackSelect = 0;
   byte slotSelect = x;  // Assign values within the cases
-  if (shiftState) {
-    switch (x) {
-      case 15:
-        break;
-      case 14:
-        break;
-      case 13:
-        break;
-      case 12:  //clear
+  switch (x) {
+    case selectPreviewRow:  //15
+      currentInst = y;
+      mode = instSeqMode;
+      break;
+
+    case muteSoloRow:  //14
+      if (shiftState) toggleSolo(y);
+      if (!shiftState) toggleMute(y);
+      break;
+
+    case 13:
+      if(y == 0){
+        //lastStepset()
+      }
+      break;
+
+    case 12:  //clear
+      if (shiftState) {
         if (utilState) {
           if (y == 7) clearInst(currentSeq, ALLTRACKS);
         } else {
           clearInst(currentSeq, y);
         }
-        break;
-      case 11:
-        break;
-      case 10:
-        break;
-      case 9:
-        randomize(currentSeq, y);
-        ////debug("randomized seq ");
-        ////debugln(y);
-        break;
-      case 8:
+      }
+      break;
 
+    case 11:
+    // transpose is handled from rotaryEncoder
+      break;
 
-        break;
-      case 7:
-      case 6:
-      case 5:
-      case 4:
-      case 3:
-      case 2:
-      case 1:
-      case 0:
-        trackSelect = y;
-        if (utilState) {
-          trackSelect = 8;
-        }
-        //debug("slot number ");
-        //debugln(slotSelect);
-        if (buttStates2D[12][7] == true) {  //is the save button pressed?
-          //debugln("SAVE BITCH!");
-          if (utilState) {
-            saveCurrentSequenceToFile(slotSelect, ALLTRACKS);
-            //saveCurrentSequenceToEEPROM(slotSelect, ALLTRACKS);  //save instrument "y" to slot "x" (saveselect)
-            for (byte i = 0; i < 4; i++) {
-              for (byte j = 0; j < 8; j++) {
-                addSporkle(i, j, 40, 0, 0, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
-              }
-            }
-          } else {
-            saveCurrentSequenceToFile(slotSelect, trackSelect);
-            //saveCurrentSequenceToEEPROM(slotSelect, trackSelect);  //save instrument "y" to slot "x" (saveselect)
-            for (byte i = 0; i < 8; i++) {
-              addSporkle(x, i, 50, 0, 0, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
-              //addSparkle(x, i, 0, 0, 50, sparkleLifespan);  // MAKE LOAD ANIM WITH THIS!!!
-            }
-            for (byte i = 0; i < 15; i++) {
-              //addSparkle(i, y, 0, 0, 50, sparkleLifespan);  // MAKE LOAD ANIM WITH THIS!!!
-              addSporkle(i, y, 50, 0, 0, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
-            }
+    case 10:
+    // Slip is handled from Rotary encoder
+      break;
+
+    case 9:
+      if (shiftState) randomize(currentSeq, y);
+      break;
+
+    case 8: // song mode (use rotary to switche between all or poly)
+      break;
+
+    case 7:
+    case 6:
+    case 5:
+    case 4:
+    case 3:
+    case 2:
+    case 1:
+    case 0:
+      trackSelect = y;
+      if (utilState) {
+        trackSelect = 8;
+      }
+      if (buttStates2D[13][0] == true) {  //is the save button pressed?
+        if (shiftState) {
+          saveCurrentSequenceToFile(slotSelect, trackSelect);
+          for (byte i = 0; i < 8; i++) {
+            addSporkle(x, i, 50, 0, 0, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
           }
-        } else {  // if save button is not held in
-          if (!utilState) {
-            recallSequenceFromFile(slotSelect, y);
-            //recallSequenceFromEEPROM(slotSelect, y);
-            for (byte i = 0; i < 8; i++) {
-              addSporkle(x, i, 0, 50, 50, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
-              //addSparkle(x, i, 0, 0, 50, sparkleLifespan);  // MAKE LOAD ANIM WITH THIS!!!
-            }
-            for (byte i = 0; i < 15; i++) {
-              //addSparkle(i, y, 0, 0, 50, sparkleLifespan);  // MAKE LOAD ANIM WITH THIS!!!
-              addSporkle(i, y, 0, 50, 50, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
-            }
+          for (byte i = 0; i < 15; i++) {
+            addSporkle(i, y, 50, 0, 0, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+          }
 
-
-          } else {
-            recallSequenceFromFile(slotSelect, ALLTRACKS);
-            //recallSequenceFromEEPROM(slotSelect, ALLTRACKS);
-            for (byte i = 0; i < 4; i++) {
-              for (byte j = 0; j < 8; j++) {
-                addSporkle(i, j, 0, 20, 20, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
-              }
-            }
+        } else {  // if shift is not held in it means load
+          recallSequenceFromFile(slotSelect, y);
+          for (byte i = 0; i < 8; i++) {
+            addSporkle(x, i, 0, 50, 50, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+          }
+          for (byte i = 0; i < 15; i++) {
+            addSporkle(i, y, 0, 50, 50, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
           }
         }
-        break;
-      default:
-        // Handle other cases when shift is true
-        break;
-    }
-  } else {  //if shift isnt held in
-    switch (x) {
-      case 15:  // select column
-        currentInst = y;
-        mode = instSeqMode;
-        break;
-      case 14:  // mute column
-        toggleMute(y);
-        if (bitRead(mutes, y)) {
-          //debug("muted ");
-        } else {
-          //debug("unmuted ");
-        }
-        //debugln(y);
-
-        break;
-      case 13:  // solo column
-        toggleSolo(y);
-        //debug("soloed ");
-        //debugln(y);
-        break;
-      case 0:
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-      case 5:
-      case 6:
-      case 7:
+      } else {             // if load/save button is not held in _________-
         if (y == 0) {      // if top row page select buttons
           currentSeq = x;  // Seq 1 2 3 or 4
           numberToDisplay = x + 1;
           textDisplayStartTime = millis();
         }
         displayNumber(x, 4, 3);
-      default:
-        //debug("x = ");
-        //debug(x);
-        //debug(" and y = ");
-        //debugln(y);
-        break;
-    }
+      }
+      break;
+
+    default:
+      break;
   }
 }
 
@@ -438,8 +389,10 @@ void handleRotaryPush() {  //rotaryclick
     if (millis() > lastSwTime + swDebounceTime) {
       rotaryPushState = !swState;
       if (rotaryPushState) {
+        currentScale += 1;
+        currentScale = currentScale % 5;
+        displayText(scaleNames[currentScale], 0, 0, true);
       }
-      //debugln(swState);
       lastSwTime = millis();
     }
   }
@@ -494,7 +447,7 @@ void rotaryMove(int moveAmount) {
     } else {
       tempo = tempo + moveAmount * 10;
     }
-  } else if(!buttStates2D[10][7]){ // if slip button is not held in
+  } else if (!buttStates2D[10][7]) {  // if slip button is not held in
     viewOffset += moveAmount;
     if (viewOffset > maxViewOffset) viewOffset = maxViewOffset;
     if (viewOffset < 0) viewOffset = 0;

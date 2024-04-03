@@ -24,9 +24,12 @@ functions i need to be able to toggle on overview page:
   - shift left/right
   - save
   - clear
-  - randomize
+  - generate // need scales arrays, currentScale selector , root note selector, drum / tones selector 
   - slot 12345678
-  - 
+  - settings
+  - song
+  - lastStep
+  
 
 functions i need to be able to toggle on setup page:
   - midi out channel per track
@@ -35,9 +38,10 @@ functions i need to be able to toggle on setup page:
   - 
 */
 
+
 int debugNum = 0;  // Variable to store a number that will br displaye on the scrim
 
-#define FASTLED_RP2040_CLOCKLESS_PIO true //gives me error: #if with no expression 7 | #if FASTLED_RP2040_CLOCKLESS_PIO
+#define FASTLED_RP2040_CLOCKLESS_PIO true  //gives me error: #if with no expression 7 | #if FASTLED_RP2040_CLOCKLESS_PIO
 #define DEBUG_ENABLED true
 
 #if DEBUG_ENABLED
@@ -121,12 +125,22 @@ int viewOffset = 0;
 byte maxViewOffset = stepDataSize - 9;
 bool transposeState = false;
 byte transposeTrack = 0;
+const char* scaleNames[5] = { "MAJ", "MIN", "PEN", "BLU", "ORI" };
+byte scales[5][8] = {
+  { 0, 2, 4, 5, 7, 9, 11, 12 },   // Major scale
+  { 0, 2, 3, 5, 7, 8, 10, 12 },   // Natural Minor scale
+  { 0, 2, 4, 7, 9, 12, 12, 12 },  // Pentatonic Major scale (repeating the octave to fill 8 notes)
+  { 0, 3, 5, 6, 7, 10, 11, 12 },  // Blues scale
+  { 0, 1, 4, 5, 7, 8, 11, 12 }    // Oriental scale
+};
 
+byte rootNote = 0;
+byte currentScale = 1;
 
 //led related
 byte cycle = 0;
 byte testColor = 255;
-int textDisplayTimeout = 500;  //500 ms from text is displayed until it dissappears
+int textDisplayTimeout = 500;     //500 ms from text is displayed until it dissappears
 int textDisplayStartTime = -500;  //to store the time the text started displaying
 byte currentInstCol[3] = { 0, 255, 0 };
 
@@ -186,9 +200,9 @@ CHSV ledColState2D[GRIDSTEPS][GRIDROWS];
 //ledGrid
 int textPosX = 0;
 unsigned long lastShow = 0;
-char scrollText[256] = ""; // Assuming max text length of 255 characters + null terminator
+char scrollText[256] = "";  // Assuming max text length of 255 characters + null terminator
 unsigned long scrollTimer = 0;
-int scrollSpeed = 7; // The speed of scrolling, higher is slower
+int scrollSpeed = 7;  // The speed of scrolling, higher is slower
 bool isScrolling = false;
 
 
@@ -216,7 +230,7 @@ byte lastEncoded = 0;
 #define SEQUENCE_FLAG 123
 
 void setup() {
-  
+
   //FAKE EEPROM IN FLASH
   EEPROM.begin(EEPROM_SIZE);
 
@@ -243,10 +257,10 @@ void setup() {
   pinMode(interruptPin, OUTPUT);  // to interrupt microbit
   digitalWrite(interruptPin, LOW);
 
-  //MIDI
-  #if defined(ARDUINO_ARCH_MBED) && defined(ARDUINO_ARCH_RP2040)
+//MIDI
+#if defined(ARDUINO_ARCH_MBED) && defined(ARDUINO_ARCH_RP2040)
   TinyUSB_Device_Init(0);
-  #endif
+#endif
   //usb_midi.setStringDescriptor("mthr");
   Serial1.setRX(1);
   Serial1.setTX(0);
@@ -273,7 +287,7 @@ void setup() {
     delay(1);                           // Wait for 1 millisecond
     if (millis() - startTime > 1000) {  // Check if 1000ms have passed
       testColor = 0;
-      break;                            // Exit the loop if more than 1000ms have passed
+      break;  // Exit the loop if more than 1000ms have passed
     }
   }
   testSetXY(testColor);
@@ -294,7 +308,7 @@ void setup() {
   currentSeq = 7;
   recallSequenceFromFile(7, ALLTRACKS);
   currentSeq = 0;
-  if(testColor == 0){
+  if (testColor == 0) {
     setMessage("STANDALONE");
     scrollSpeed = 6;
   } else {
@@ -445,8 +459,11 @@ void checkStepTimer() {
       }
     }
   }
+  
   if (currentStep != lastHandledStep) {
-    handleStep(currentStep);
+    if (currentStep >= 0) {
+      handleStep(currentStep);
+    }
     lastHandledStep = currentStep;
   }
 }
@@ -496,21 +513,5 @@ bool readBit(T input, byte bit) {
     return (input & (T(1) << bit)) != 0;
   } else {
     return false;  // Bit position is out of range
-  }
-}
-
-void toggleMute(byte trackNumber) {
-  mutes = toggleBit(mutes, trackNumber);
-}
-
-void toggleSolo(byte trackNumber) {
-  //debug"SOLOED ");
-  debugln(trackNumber);
-  for (byte i = 0; i < 8; i++) {
-    if (i == trackNumber) {
-      mutes = setBit(mutes, i, false);
-    } else {
-      mutes = setBit(mutes, i, true);
-    }
   }
 }

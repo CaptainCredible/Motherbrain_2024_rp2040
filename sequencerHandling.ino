@@ -505,3 +505,23 @@ void slip(byte seq, byte track, bool directionRight) {
   }
 }
 
+
+
+
+
+
+void toggleMute(byte trackNumber) {
+  mutes = toggleBit(mutes, trackNumber);
+}
+
+void toggleSolo(byte trackNumber) {
+  //debug"SOLOED ");
+  //debugln(trackNumber);
+  for (byte i = 0; i < 8; i++) {
+    if (i == trackNumber) {
+      mutes = setBit(mutes, i, false);
+    } else if(!buttStates2D[muteSoloRow][i]){
+      mutes = setBit(mutes, i, true);
+    }
+  }
+}
