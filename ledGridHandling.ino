@@ -620,3 +620,10 @@ void initLedGridState() {
     }
   }
 }
+
+
+void noise(){
+  for(byte i = 0; i<128; i++){
+    setALEDHSV(i,random(0,255), 255,random(0,255));
+  }
+}

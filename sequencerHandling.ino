@@ -77,14 +77,10 @@ uint64_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 seq
 };
 
 // for randomization
-uint16_t kickPattens[8] = { 0b1000000010000000, 0b1000000000000000, 0b1001001010001000, 0b1001001001001000, 0b1000100110100100, 0b1010000110100000, 0b1000000010001010, 0b1000000010000100 };
+uint16_t kickPatterns[8] = { 0b1000000010000000, 0b1000000000000000, 0b1001001010001000, 0b1001001001001000, 0b1000100110100100, 0b1010000110100000, 0b1000000010001010, 0b1000000010000100 };
 uint16_t snarePatterns[8] = { 0b0000100000001000, 0b0000100101001000, 0b0010010000100100, 0b0010001000100010, 0b0000001000001010, 0b0010001000100001, 0b0000000010000000, 0b0000100001001000 };
 uint16_t hatPatterns[8] = { 0b1000100010001000, 0b0000100000001000, 0b0010010000100100, 0b1010101010101010, 0b1111111111111111, 0b0100100100100100, 0b0001001001001001, 0b1001001001001010 };
-void randomize(byte whotSeq, byte whotInst) {
-  if (whotInst == 0) {  // it its a drum track
-    // use pattern arrays to populate tracks TODO
-  }
-}
+
 
 
 //TOTAL 4096 bytes of EEPROM.
@@ -99,7 +95,7 @@ void randomize(byte whotSeq, byte whotInst) {
 // if i was to rewrite to describe individual 7bit notes i would get (128/7 = 18 note polyphony per step per inst...) hmm. or 9 note polyphony if i use 64bits pet step.
 
 // or i could use 1 byte per step to describe step number (last bit s not needed to store note number up to 127 so last bit can be to signify step) then only store the notes i need, giving me an average of like 6-7 notes per step ? doesnt quite align with bytes so it would get complicated
-// i woud need to describe "end of data" with all ones perhaps 
+// i woud need to describe "end of data" with all ones perhaps
 
 void saveCurrentSequenceToEEPROM(int slot, int trackToSave) {  // 8 saves all tracks
   if (slot >= 0 && slot < 4) {
@@ -134,8 +130,8 @@ void saveCurrentSequenceToEEPROM(int slot, int trackToSave) {  // 8 saves all tr
 
 void recallSequenceFromEEPROM(int slot, int trackToLoad) {  // 8 LOADS ALL TRACKS
   if (slot >= 0 && slot < 4) {                              // make sure we arent trying to load outside of memory
-  EEPROM.begin(EEPROM_SIZE);
-    uint32_t address = slot * (SEQUENCE_SIZE + 1);          // +1 for the flag
+    EEPROM.begin(EEPROM_SIZE);
+    uint32_t address = slot * (SEQUENCE_SIZE + 1);  // +1 for the flag
     //seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS]
     //if (EEPROM.read(address) == SEQUENCE_FLAG) {  // Check the flag
     if (true) {  // ignore the flag
@@ -245,6 +241,12 @@ void clearNote(uint8_t sequence, uint8_t instrument, uint8_t step, uint8_t note)
   seqMatrix[sequence][instrument][step] &= bitmask;  // Clear the bit in the seqMatrix for the specified sequence, instrument, and step
 }
 
+void toggleNote(uint8_t sequence, uint8_t instrument, uint8_t step, uint8_t note) {
+  if (note > 63) return;                             // Check if the note value is valid (0 to 63 because uint64_t has 64 bits)
+  uint64_t bitmask = 1ULL << note;                   // Create a bitmask for the note
+  seqMatrix[sequence][instrument][step] ^= bitmask;  // Toggle the bit in the seqMatrix for the specified sequence, instrument, and step
+}
+
 void clearTrack(byte sequenceToClear, byte trackToClear) {
   if (trackToClear == ALLTRACKS) {
     for (byte j = 0; j < INSTRUMENTS; j++) {
@@ -277,13 +279,6 @@ void clearInst(byte whotSeq, byte whotInst) {
 
 
 
-void toggleNote(uint8_t sequence, uint8_t instrument, uint8_t step, uint8_t note) {
-  if (note > 63) return;                             // Check if the note value is valid (0 to 63 because uint64_t has 64 bits)
-  uint64_t bitmask = 1ULL << note;                    // Create a bitmask for the note
-  seqMatrix[sequence][instrument][step] ^= bitmask;  // Toggle the bit in the seqMatrix for the specified sequence, instrument, and step
-}
-
-
 struct TimedNote {
   byte note;
   unsigned long startTime;
@@ -314,7 +309,7 @@ void checkAndHandleTimedNotes() {
   for (int i = 0; i < maxTimedNotes; i++) {
     if (timedNotes[i].note != 0 && (millis() - timedNotes[i].startTime) > timedNotes[i].duration) {
       HWMIDI.sendNoteOff(timedNotes[i].note, 127, timedNotes[i].channel);
-      if(!midiClockRunning){
+      if (!midiClockRunning) {
         USBMIDI.sendNoteOff(timedNotes[i].note, 127, timedNotes[i].channel);
       }
       timedNotes[i].note = 0;  // Reset the note to indicate it's handled
@@ -357,7 +352,7 @@ void handleStep(byte stepToHandle) {
               currentInstCol[2] = trackColors[currentTrack][2];
               //addSparkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan*4);  // make that pixel sparkle for 500ms, also invert Y axis
               addSporkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], overviewColor[0], overviewColor[1], overviewColor[2], sparkleLifespan * 2);  // make that pixel sparkle for 500ms, also invert Y axis
-              addSporkle(15, currentTrack,255,255,255,currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);
+              addSporkle(15, currentTrack, 255, 255, 255, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);
               alreadyTriggeredSparkleForThisTrack = true;
             }
           } else {
@@ -371,16 +366,16 @@ void handleStep(byte stepToHandle) {
   }
 
   tracksBuffer16x8[8] = currentStep;  //slot number eight is where we send the current step number
-  tracksBuffer16x8[9] = mutes;   //slot 9 is where the mutes are stored
+  tracksBuffer16x8[9] = mutes;        //slot 9 is where the mutes are stored
   sendTracksBuffer();
 }
 
 void triggerMidiNote(byte noteToSend, byte channelToSend) {
   if (numActiveNotes < maxTimedNotes) {
     byte midiNote = noteToSend + 60;
-    HWMIDI.sendNoteOn(midiNote, 127, channelToSend+1);
-    if(!midiClockRunning){   // this keeps us from sending midi if we are busy receiving midi. 
-      USBMIDI.sendNoteOn(midiNote, 126, channelToSend+1); // TRY COMMENTING OUT THIS!!!  
+    HWMIDI.sendNoteOn(midiNote, 127, channelToSend + 1);
+    if (!midiClockRunning) {                                 // this keeps us from sending midi if we are busy receiving midi.
+      USBMIDI.sendNoteOn(midiNote, 126, channelToSend + 1);  // TRY COMMENTING OUT THIS!!!
     }
     addTimedNote(midiNote, 50, channelToSend);  // Assuming 50ms is the duration for each note ALSO TRY TO REMOVE THIS AS TEST???
   }
@@ -426,26 +421,26 @@ void saveCurrentSequenceToFile(int slot, int trackToSave) {
 
 
 void recallSequenceFromFile(int slot, int trackToLoad) {
-  if (slot >= 0 && slot < 8) { // Ensure valid slot number
+  if (slot >= 0 && slot < 8) {  // Ensure valid slot number
     LittleFS.begin();
-    String filename = "/seq" + String(slot) + ".dat"; // Construct filename for slot
-    File file = LittleFS.open(filename, "r"); // Open file for reading
-    
+    String filename = "/seq" + String(slot) + ".dat";  // Construct filename for slot
+    File file = LittleFS.open(filename, "r");          // Open file for reading
+
     if (file) {
       // Calculate the start address for the trackToLoad in the file
       // This skips directly to the data for the specified track
-      for (int i = 0; i < 8; i++) { // Iterate over tracks
+      for (int i = 0; i < 8; i++) {  // Iterate over tracks
         if (trackToLoad == i || trackToLoad == ALLTRACKS) {
-          file.seek(i * 16 * sizeof(uint64_t), SeekSet); // Seek to the start of the track in the file
-          for (int j = 0; j < 16; j++) { // Iterate over steps
+          file.seek(i * 16 * sizeof(uint64_t), SeekSet);  // Seek to the start of the track in the file
+          for (int j = 0; j < 16; j++) {                  // Iterate over steps
             uint64_t value;
-            if(file.read((byte*)&value, sizeof(value)) == sizeof(value)) { // Read each step
-              seqMatrix[currentSeq][i][j] = value; // Assign value to matrix
+            if (file.read((byte*)&value, sizeof(value)) == sizeof(value)) {  // Read each step
+              seqMatrix[currentSeq][i][j] = value;                           // Assign value to matrix
             }
           }
         }
       }
-      file.close(); // Close the file
+      file.close();  // Close the file
       debug("loaded instrument ");
       if (trackToLoad == ALLTRACKS) {
         debug("ALL TRACKS");
@@ -467,15 +462,15 @@ void transpose(byte seq, byte track, bool directionUp) {
   for (byte stepSelect = 0; stepSelect < 16; stepSelect++) {
     // Retrieve the current step data
     uint64_t stepData = seqMatrix[seq][track][stepSelect];
-    
+
     if (directionUp) {
       // Rotate left: Take the leftmost bit and move it to the rightmost position
-      uint64_t rotatedBit = (stepData & 0x8000000000000000) >> 63; // Extract leftmost bit and position it at the rightmost
-      seqMatrix[seq][track][stepSelect] = (stepData << 1) | rotatedBit; // Shift left and add the rotated bit on the right
+      uint64_t rotatedBit = (stepData & 0x8000000000000000) >> 63;       // Extract leftmost bit and position it at the rightmost
+      seqMatrix[seq][track][stepSelect] = (stepData << 1) | rotatedBit;  // Shift left and add the rotated bit on the right
     } else {
       // Rotate right: Take the rightmost bit and move it to the leftmost position
-      uint64_t rotatedBit = (stepData & 0x1) << 63; // Extract rightmost bit and position it at the leftmost
-      seqMatrix[seq][track][stepSelect] = (stepData >> 1) | rotatedBit; // Shift right and add the rotated bit on the left
+      uint64_t rotatedBit = (stepData & 0x1) << 63;                      // Extract rightmost bit and position it at the leftmost
+      seqMatrix[seq][track][stepSelect] = (stepData >> 1) | rotatedBit;  // Shift right and add the rotated bit on the left
     }
   }
 }
@@ -483,12 +478,12 @@ void transpose(byte seq, byte track, bool directionUp) {
 void slip(byte seq, byte track, bool directionRight) {
   // Temporary storage to hold the steps before rearranging
   uint64_t tempSteps[16];
-  
+
   // Copy the current sequence of steps into temporary storage
   for (byte i = 0; i < 16; i++) {
     tempSteps[i] = seqMatrix[seq][track][i];
   }
-  
+
   for (byte i = 0; i < 16; i++) {
     // Calculate new position based on the direction of the shift
     byte newPos;
@@ -499,15 +494,52 @@ void slip(byte seq, byte track, bool directionRight) {
       // If shifting left, wrap around by adding to the total length
       newPos = (i + 15) % 16;
     }
-    
+
     // Assign the step from its original position to the new position
     seqMatrix[seq][track][newPos] = tempSteps[i];
   }
 }
 
+void randomSeq() {
+  generateSequence(currentSeq, currentInst, DRUMSEQ, MIN);
+}
+
+void generateSequence(byte sequence, byte instrument, byte seqType, byte scaleType) {
+  if (seqType == DRUMSEQ) {
+    byte randSelector = random(0, 8);
+    for (int i = 0; i < 16; i++) {
+      bool isSet = kickPatterns[randSelector] & (1 << 15-i);
+      clearNote(sequence, instrument, i, 0);
+      if (isSet) {
+        if (random(0, 100) < 90) {  //90% chance
+          setNote(sequence, instrument, i, 0);
+        }
+      }
+      isSet = hatPatterns[randSelector] & (1 << 15-i);
+      clearNote(sequence, instrument, i, 1);
+      if (isSet) {
+        if (random(0, 100) < 90) {  //90% chance
+          setNote(currentSeq, currentInst, i, 1);
+        }
+      }
+      clearNote(sequence, instrument, i, 2);
+      isSet = snarePatterns[randSelector] & (1 << 15-i);
+      if (isSet) {
+        if (random(0, 100) < 90) {  //90% chance
+          setNote(currentSeq, currentInst, i, 2);
+        }
+      }
+    }
+  }
+}
 
 
-
+// Example of calling generateSequence
+//int main() {
+//  uint64_t myArray[16];
+//  generateSequence(true, 1, myArray, 16);
+// Now myArray is filled by generateSequence
+//}
 
 
 void toggleMute(byte trackNumber) {
@@ -520,7 +552,7 @@ void toggleSolo(byte trackNumber) {
   for (byte i = 0; i < 8; i++) {
     if (i == trackNumber) {
       mutes = setBit(mutes, i, false);
-    } else if(!buttStates2D[muteSoloRow][i]){
+    } else if (!buttStates2D[muteSoloRow][i]) {
       mutes = setBit(mutes, i, true);
     }
   }

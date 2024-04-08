@@ -10,9 +10,7 @@
 /*
 
 things to add:
-  - tell me if save recall worked or not // or just make sure to init all saves add a section in setup that checks if loading a sequence fails, if it does, just write prestored seqs
-  - hold multiple solos at once and unmute everything when nothing is soloed
-  - chain sequences (add own chain page ?)
+  - chain sequences (add own chain page ?) SONG MODE. Logic for songmode all tracks vs song mode 1 track
   - change MIDI clock input subdivision
   - Randomize
   
@@ -125,7 +123,22 @@ int viewOffset = 0;
 byte maxViewOffset = stepDataSize - 9;
 bool transposeState = false;
 byte transposeTrack = 0;
+
+
+#define DRUMSEQ 1
+#define CHORDSEQ 2
+#define MELODYSEQ 3
+#define BASSSEQ 4
+
+byte scaleSelect = 0;
+#define MAJ 0
+#define MIN 1
+#define PEN 2
+#define BLU 3
+#define ORI 4
+
 const char* scaleNames[5] = { "MAJ", "MIN", "PEN", "BLU", "ORI" };
+
 byte scales[5][8] = {
   { 0, 2, 4, 5, 7, 9, 11, 12 },   // Major scale
   { 0, 2, 3, 5, 7, 8, 10, 12 },   // Natural Minor scale
@@ -133,6 +146,33 @@ byte scales[5][8] = {
   { 0, 3, 5, 6, 7, 10, 11, 12 },  // Blues scale
   { 0, 1, 4, 5, 7, 8, 11, 12 }    // Oriental scale
 };
+
+byte lastSteps[8][8]{ //track, page/seq
+                      { 15, 15, 15, 15, 15, 15, 15, 15 },
+                      { 15, 15, 15, 15, 15, 15, 15, 15 },
+                      { 15, 15, 15, 15, 15, 15, 15, 15 },
+                      { 15, 15, 15, 15, 15, 15, 15, 15 },
+                      { 15, 15, 15, 15, 15, 15, 15, 15 },
+                      { 15, 15, 15, 15, 15, 15, 15, 15 },
+                      { 15, 15, 15, 15, 15, 15, 15, 15 },
+                      { 15, 15, 15, 15, 15, 15, 15, 15 }
+};
+
+byte songLengths[8]{ 1, 1, 1, 1, 1, 1, 1, 1 };
+
+byte songs[8][16]{ //track, songStep
+                   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+};
+
+bool triplets = false;
+
 
 byte rootNote = 0;
 byte currentScale = 1;
@@ -389,10 +429,7 @@ void loop() {  // the whole loop uses max 1040us, idles at 400 for cycles withou
   while (USBMIDI.read()) {  //2us idle, 50 - 150 for a note, 33 - 60 for a midi clock
   }
 
-  if (rotaryPushState) {
-    //setPixelXY(0, 7, 100, 0, 0);  // HERE!!!!
-    //displayNumber(debugNum, -1, 2);
-  }
+
 
   updateScroll();
   /*  
@@ -402,10 +439,12 @@ void loop() {  // the whole loop uses max 1040us, idles at 400 for cycles withou
 
   displayText("text", textPosX + 15, 1,false);
   */
-
   fastLEDUpdateCounter++;
   fastLEDUpdateCounter = fastLEDUpdateCounter % 16;  // this MASSIVELY inproves performance, %16 gives me approx 140FPS
   if (fastLEDUpdateCounter == 0) {
+    if (rotaryPushState) {
+      noise();
+    }
     FastLED.show();  //175us
   }
 }
@@ -459,7 +498,7 @@ void checkStepTimer() {
       }
     }
   }
-  
+
   if (currentStep != lastHandledStep) {
     if (currentStep >= 0) {
       handleStep(currentStep);

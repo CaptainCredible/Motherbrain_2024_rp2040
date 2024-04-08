@@ -79,7 +79,9 @@ void instSeqModeButts(byte x, byte y) {
         break;
 
       case 9:  //randomize
-        //randomize(currentSeq, currentInst);
+        if (shiftState && y == 7) {
+          randomSeq();
+        }
         break;
 
       case 10:
@@ -149,7 +151,7 @@ void overviewModeButts(byte x, byte y) {
       break;
 
     case 13:
-      if(y == 0){
+      if (y == 0) {
         //lastStepset()
       }
       break;
@@ -165,18 +167,18 @@ void overviewModeButts(byte x, byte y) {
       break;
 
     case 11:
-    // transpose is handled from rotaryEncoder
+      // transpose is handled from rotaryEncoder
       break;
 
     case 10:
-    // Slip is handled from Rotary encoder
+      // Slip is handled from Rotary encoder
       break;
 
     case 9:
-      if (shiftState) randomize(currentSeq, y);
+      //if (shiftState) generateSequence(DRUMSEQ, MINORSCALE, currentSeq, y); //void generateSequence(bool seqType, byte scaleType, uint64_t* outArray, size_t outArraySize) {
       break;
 
-    case 8: // song mode (use rotary to switche between all or poly)
+    case 8:  // song mode (use rotary to switche between all or poly)
       break;
 
     case 7:
@@ -441,8 +443,9 @@ void drawRotaryMasterCounterOverSerial() {
 
 // add transpose here!
 void rotaryMove(int moveAmount) {
+
   if (shiftState && mode == overviewMode) {
-    if (rotaryPushState) {
+    if (!rotaryPushState) {
       tempo = tempo + moveAmount;
     } else {
       tempo = tempo + moveAmount * 10;
