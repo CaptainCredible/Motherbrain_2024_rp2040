@@ -188,12 +188,12 @@ void overviewModeButts(byte x, byte y) {
     case 3:
     case 2:
     case 1:
-    case 0:
+    case 0:    
       trackSelect = y;
       if (utilState) {
         trackSelect = 8;
       }
-      if (buttStates2D[13][0] == true) {  //is the save button pressed?
+      if (buttStates2D[13][7] == true) {  //is the save/load button pressed?
         if (shiftState) {
           saveCurrentSequenceToFile(slotSelect, trackSelect);
           for (byte i = 0; i < 8; i++) {
@@ -218,13 +218,14 @@ void overviewModeButts(byte x, byte y) {
           numberToDisplay = x + 1;
           textDisplayStartTime = millis();
         }
-        displayNumber(x, 4, 3);
+        //displayNumber(x, 4, 3);
       }
       break;
 
     default:
       break;
   }
+  debugln(buttStates2D[13][7]);
 }
 
 
@@ -267,13 +268,13 @@ void scanGrid() {
       }
       if (digitalRead(pinToRead)) {       //check inGridA pin or inGridB pin depending on what we set pinToRead to
         if (!buttStates2D[offsetX][y]) {  // if it was not pushed previously
-          handleButtPress(offsetX, y);
           buttStates2D[offsetX][y] = true;
+          handleButtPress(offsetX, y);
         }
       } else {
         if (buttStates2D[offsetX][y]) {  // if it was previously pushed in
-          handleButtRelease(offsetX, y);
           buttStates2D[offsetX][y] = false;
+          handleButtRelease(offsetX, y);
         }
       }
     }

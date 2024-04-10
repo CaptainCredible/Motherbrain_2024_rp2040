@@ -447,6 +447,7 @@ void loop() {  // the whole loop uses max 1040us, idles at 400 for cycles withou
     }
     FastLED.show();  //175us
   }
+  //
 }
 
 unsigned long lastStepTime = 0;
