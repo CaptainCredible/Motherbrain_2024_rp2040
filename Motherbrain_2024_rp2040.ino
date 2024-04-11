@@ -1,4 +1,11 @@
 
+//USES Francois Best's MIDI library
+//USES Earle Philhower's  RP2040 Core
+//  TinyUSB stack, FLASH: 2MB (512KB FS)
+//USES FastLed library
+
+
+
 /*
 
     IT CRASHES IF IT SENDS AND RECEIVES OVER USB.

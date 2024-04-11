@@ -200,16 +200,16 @@ void displayPageNoBlink() {
   }
 }
 
-byte overviewColor[3] = { 100, 70, 50 };
-byte mutedColor[3] = { 40, 40, 40 };
+byte overviewColor[3] = { 20, 20, 20 };
+// byte mutedColor[3] = { 40, 40, 40 };
 
 void drawSeqOverview(uint8_t currentSeq) {
   int fadedAmount = 0;  // doesnt work very well
   for (uint8_t selectInst = 0; selectInst < SEQUENCES; selectInst++) {
     if (bitRead(mutes, selectInst)) {  // if this track is muted
-      fadedAmount = 4;
+      fadedAmount = 5;
     } else {
-      fadedAmount = 0;
+      fadedAmount = 1;
     }
     int thisTrackRed = trackColors[selectInst][0] >> fadedAmount;
     if (thisTrackRed < 5) thisTrackRed = 5;
@@ -219,7 +219,6 @@ void drawSeqOverview(uint8_t currentSeq) {
     if (thisTrackBlue < 5) thisTrackBlue = 5;
     for (uint8_t step = 0; step < GRIDSTEPS; step++) {
       if (seqMatrix[currentSeq][selectInst][step] > 0) {
-
         setPixelXY(step, selectInst, overviewColor[0], overviewColor[1], overviewColor[2]);  // assume i is the Y-coordinate here
       }
       if (step == 15) {

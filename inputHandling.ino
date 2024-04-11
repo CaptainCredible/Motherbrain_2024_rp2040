@@ -188,7 +188,7 @@ void overviewModeButts(byte x, byte y) {
     case 3:
     case 2:
     case 1:
-    case 0:    
+    case 0:
       trackSelect = y;
       if (utilState) {
         trackSelect = 8;
@@ -307,36 +307,40 @@ void scanButtsNKnobs() {
       //debugln("butt released");
     }
   }
-
-  playButtonState = !digitalRead(PLAYPAUSEPIN);
+  unsigned long lastPlayPress = 0;
+  int playButtonDebounce = 20;
+    playButtonState = !digitalRead(PLAYPAUSEPIN);
   if (playButtonState != oldPlayButtonState) {
     if (playButtonState) {  // when button goes from off to on
-      //check if we are under midi clock:
-      if (!midiClockRunning) {
-        if (!shiftState) {
-          playing = !playing;
+      if (millis() - lastPlayPress > playButtonDebounce) {
+        lastPlayPress = millis();
+        //check if we are under midi clock:
+        if (!midiClockRunning) {
+          if (!shiftState) {
+            playing = !playing;
+          } else {
+            playing = true;
+          }
+          if (!playing) {
+            currentStep = -1;
+            HWMIDI.sendStop();
+          } else if (playing) {
+            HWMIDI.sendStart();
+            HWMIDI.sendClock();
+            counter24ppqn = 0;
+            lastStepTime = micros();
+            currentStep = 0;
+            handleStep(currentStep);
+          }
         } else {
-          playing = true;
-        }
-        if (!playing) {
-          currentStep = -1;
-          HWMIDI.sendStop();
-        } else if (playing) {
-          HWMIDI.sendStart();
-          HWMIDI.sendClock();
-          counter24ppqn = 0;
-          lastStepTime = micros();
-          currentStep = 0;
-          handleStep(currentStep);
-        }
-      } else {
-        if (shiftState) {
-          //HWMIDI.sendStop();
-          lastStepTime = micros();
-          currentStep = 0;
-          midiClockCounter = 0;
-          counter24ppqn = 0;
-          handleStep(currentStep);
+          if (shiftState) {
+            //HWMIDI.sendStop();
+            lastStepTime = micros();
+            currentStep = 0;
+            midiClockCounter = 0;
+            counter24ppqn = 0;
+            handleStep(currentStep);
+          }
         }
       }
     }
