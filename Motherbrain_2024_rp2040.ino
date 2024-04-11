@@ -277,7 +277,8 @@ byte lastEncoded = 0;
 #define SEQUENCE_FLAG 123
 
 void setup() {
-
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
   //FAKE EEPROM IN FLASH
   EEPROM.begin(EEPROM_SIZE);
 
