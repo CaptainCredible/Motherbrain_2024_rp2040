@@ -120,6 +120,7 @@ byte solos = 0b00000000;
 uint16_t mutes = 0b00000000;
 volatile int currentStep = -1;
 byte currentSeq = 0;
+byte currentSeqs[8] = {0,0,0,0,0,0,0,0};
 byte currentInst = 0;
 bool playing = false;
 unsigned int tempoMillis = 100;

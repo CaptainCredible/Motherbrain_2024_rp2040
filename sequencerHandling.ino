@@ -83,19 +83,6 @@ uint16_t hatPatterns[8] = { 0b1000100010001000, 0b0000100000001000, 0b0010010000
 
 
 
-//TOTAL 4096 bytes of EEPROM.
-//32 bits per step per instrument
-//32bits * 16steps * 8 instruments = 4096 bits (not bytes)
-//that means 4bytes per step per instrument
-//4bytes * 16steps * 8 instruments = 512bytes per page (a.k.a. sequence)
-//this times 4 pages = 2048
-//bump it up to 64bits = 8bytes * 16steps * 8 instruments = 1024bytes per page (a.k.a. sequence) * 4 pages = 4096, this means no room for flags. just read EEPROM anyway?
-// WE NEED BIGGER STORAGE FOR 64 notes / bits per step!
-// if we go all the way up to 128, we need 16bytes * 16 steps * 8 instruments = 2048 bytes per page, * 4 pages = 8192. i would also like to set some flags and other settings so i guess 16kB
-// if i was to rewrite to describe individual 7bit notes i would get (128/7 = 18 note polyphony per step per inst...) hmm. or 9 note polyphony if i use 64bits pet step.
-
-// or i could use 1 byte per step to describe step number (last bit s not needed to store note number up to 127 so last bit can be to signify step) then only store the notes i need, giving me an average of like 6-7 notes per step ? doesnt quite align with bytes so it would get complicated
-// i woud need to describe "end of data" with all ones perhaps
 
 void saveCurrentSequenceToEEPROM(int slot, int trackToSave) {  // 8 saves all tracks
   if (slot >= 0 && slot < 4) {
@@ -190,13 +177,28 @@ void drawStepState(uint8_t sequence, uint8_t instrument, uint8_t step) {
 unsigned long lastBlink = 0;
 int blinkDuration = 300;
 bool blinkState = false;
+
 void displayPageNoBlink() {
-  if (millis() - lastBlink > blinkDuration) {
-    blinkState = !blinkState;
-    lastBlink = millis();
-  }
-  if (blinkState) {
-    setPixelXY(currentSeq, 0, 100, 0, 0);  // HERE!!!!
+  
+    if (millis() - lastBlink > blinkDuration) {
+      blinkState = !blinkState;
+      lastBlink = millis();
+    }
+    if (blinkState) {
+      setPixelXY(currentSeq, 0, 100, 0, 0);  // HERE!!!!
+    }
+  
+}
+
+void displayMultiPageNoBlink() {
+  for (int i = 0; i < 8; i++) {
+    if (millis() - lastBlink > blinkDuration) {
+      blinkState = !blinkState;
+      lastBlink = millis();
+    }
+    if (blinkState) {
+      setPixelXY(currentSeqs[i], i, 100, 0, 0);  // HERE!!!!
+    }
   }
 }
 
@@ -507,14 +509,14 @@ void generateSequence(byte sequence, byte instrument, byte seqType, byte scaleTy
   if (seqType == DRUMSEQ) {
     byte randSelector = random(0, 8);
     for (int i = 0; i < 16; i++) {
-      bool isSet = kickPatterns[randSelector] & (1 << 15-i);
+      bool isSet = kickPatterns[randSelector] & (1 << 15 - i);
       clearNote(sequence, instrument, i, 0);
       if (isSet) {
         if (random(0, 100) < 90) {  //90% chance
           setNote(sequence, instrument, i, 0);
         }
       }
-      isSet = hatPatterns[randSelector] & (1 << 15-i);
+      isSet = hatPatterns[randSelector] & (1 << 15 - i);
       clearNote(sequence, instrument, i, 1);
       if (isSet) {
         if (random(0, 100) < 90) {  //90% chance
@@ -522,7 +524,7 @@ void generateSequence(byte sequence, byte instrument, byte seqType, byte scaleTy
         }
       }
       clearNote(sequence, instrument, i, 2);
-      isSet = snarePatterns[randSelector] & (1 << 15-i);
+      isSet = snarePatterns[randSelector] & (1 << 15 - i);
       if (isSet) {
         if (random(0, 100) < 90) {  //90% chance
           setNote(currentSeq, currentInst, i, 2);

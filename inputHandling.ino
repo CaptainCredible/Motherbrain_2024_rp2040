@@ -10,7 +10,7 @@ byte CX = 18;
 
 byte inGridA = 16;  // left 8x8
 byte inGridB = 17;  // right 8x8
-
+unsigned long playButtonDebounceTimer = 0;
 
 
 void handleButtPress(byte x, byte y) {  //also handles buttrelease
@@ -203,13 +203,19 @@ void overviewModeButts(byte x, byte y) {
             addSporkle(i, y, 50, 0, 0, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
           }
 
-        } else {  // if shift is not held in it means load
-          recallSequenceFromFile(slotSelect, y);
-          for (byte i = 0; i < 8; i++) {
-            addSporkle(x, i, 0, 50, 50, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
-          }
-          for (byte i = 0; i < 15; i++) {
-            addSporkle(i, y, 0, 50, 50, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+        } else {                      // if shift is not held in it means load
+          if (utilState && y == 7) {  // if all button is held in and we are using borrom row
+            for (int i = 0; i < 8; i++) {
+              recallSequenceFromFile(slotSelect, i);
+            }
+          } else {
+            recallSequenceFromFile(slotSelect, y);
+            for (byte i = 0; i < 8; i++) {
+              addSporkle(x, i, 0, 50, 50, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+            }
+            for (byte i = 0; i < 15; i++) {
+              addSporkle(i, y, 0, 50, 50, 0, 0, 0, sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+            }
           }
         }
       } else {             // if load/save button is not held in _________-
@@ -307,48 +313,49 @@ void scanButtsNKnobs() {
       //debugln("butt released");
     }
   }
-  unsigned long lastPlayPress = 0;
-  int playButtonDebounce = 20;
+
+  if (millis() > playButtonDebounceTimer) {
     playButtonState = !digitalRead(PLAYPAUSEPIN);
-  if (playButtonState != oldPlayButtonState) {
-    if (playButtonState) {  // when button goes from off to on
-      if (millis() - lastPlayPress > playButtonDebounce) {
-        lastPlayPress = millis();
-        //check if we are under midi clock:
-        if (!midiClockRunning) {
-          if (!shiftState) {
-            playing = !playing;
-          } else {
-            playing = true;
-          }
-          if (!playing) {
-            currentStep = -1;
-            HWMIDI.sendStop();
-          } else if (playing) {
-            HWMIDI.sendStart();
-            HWMIDI.sendClock();
-            counter24ppqn = 0;
-            lastStepTime = micros();
-            currentStep = 0;
-            handleStep(currentStep);
-          }
-        } else {
-          if (shiftState) {
-            //HWMIDI.sendStop();
-            lastStepTime = micros();
-            currentStep = 0;
-            midiClockCounter = 0;
-            counter24ppqn = 0;
-            handleStep(currentStep);
-          }
-        }
-      }
+    if (playButtonState != oldPlayButtonState) {
+      playButtonDebounceTimer = millis() + 30;        // Update the time of state change
+      handlePlayButtonStateChange();         // Handle the state change
+      oldPlayButtonState = playButtonState;  // Update the old state only after confirming a state change
     }
-    oldPlayButtonState = playButtonState;
   }
 }
 
-
+void handlePlayButtonStateChange() {
+  if (playButtonState) {  // when button goes from off to on
+    //check if we are under midi clock:
+    if (!midiClockRunning) {
+      if (!shiftState) {
+        playing = !playing;
+      } else {
+        playing = true;
+      }
+      if (!playing) {
+        currentStep = -1;
+        HWMIDI.sendStop();
+      } else if (playing) {
+        HWMIDI.sendStart();
+        HWMIDI.sendClock();
+        counter24ppqn = 0;
+        lastStepTime = micros();
+        currentStep = 0;
+        handleStep(currentStep);
+      }
+    } else {
+      if (shiftState) {
+        //HWMIDI.sendStop();
+        lastStepTime = micros();
+        currentStep = 0;
+        midiClockCounter = 0;
+        counter24ppqn = 0;
+        handleStep(currentStep);
+      }
+    }
+  }
+}
 
 int mapToTempoExp(int input) {
   int maxTempo = 999;
