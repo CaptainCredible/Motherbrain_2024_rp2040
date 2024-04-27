@@ -140,7 +140,7 @@ void HandleUsbNoteOff(byte note, byte velocity, byte channel) {
 }
 
 void midiClockStep() {
-  currentStep = (currentStep + 1) % GRIDSTEPS;
+  currentStep = (currentStep + 1) % lastStep;
   //
 }
 

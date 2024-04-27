@@ -21,6 +21,9 @@ void handleButtPress(byte x, byte y) {  //also handles buttrelease
     case overviewMode:
       overviewModeButts(x, y);
       break;
+    case lastStepMode:
+      lastStepModeButts(x, y);
+      break;
   }
 }
 
@@ -134,6 +137,10 @@ void instSeqModeButts(byte x, byte y) {
   }
 }
 
+void lastStepModeButts(byte x, byte y){
+  lastStep = x+1;
+}
+
 const byte muteSoloRow = 14;
 const byte selectPreviewRow = 15;
 void overviewModeButts(byte x, byte y) {
@@ -152,7 +159,9 @@ void overviewModeButts(byte x, byte y) {
 
     case 13:
       if (y == 0) {
-        //lastStepset()
+        if(shiftState){
+          mode = lastStepMode;
+        }
       }
       break;
 

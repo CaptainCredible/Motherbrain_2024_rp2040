@@ -36,9 +36,9 @@ void setPixelXY(int Xcoord, int Ycoord, byte R, byte G, byte B) {
 int gridBrightness = 5;  // shift amount
 
 void drawHelpers() {
-  for (byte i = 0; i < GRIDSTEPS >> 2; i++) {
+  for (byte i = 0; i < lastStep+1; i+=4) {
     for (byte j = 0; j < GRIDROWS; j++) {
-      softSetPixelXY(i << 2, j, currentInstCol[0] >> gridBrightness, currentInstCol[1] >> gridBrightness, currentInstCol[2] >> gridBrightness);
+      softSetPixelXY(i, j, currentInstCol[0] >> gridBrightness, currentInstCol[1] >> gridBrightness, currentInstCol[2] >> gridBrightness);
     }
   }
 }
@@ -51,7 +51,7 @@ void drawPianoRoll() {
     int offsetRow = invRow + viewOffset;
     //if(offsetRow<0){offsetRow = 11;}
     if (pianoRoll[offsetRow % 12]) {
-      for (byte stp = 0; stp < GRIDSTEPS; stp++) {
+      for (byte stp = 0; stp < lastStep; stp++) {
         softSetPixelXY(stp, row, currentInstCol[0] >> gridBrightness, currentInstCol[1] >> gridBrightness, currentInstCol[2] >> gridBrightness);
       }
     }
@@ -502,21 +502,22 @@ void displayText(const char* text, int xPos, int yPos, bool ping) {
 
   for (int k = 0; k < textLength; k++) {
     char ch = text[k];
-    
-    if (ch == ' ') { // Check if the character is a space
+
+    if (ch == ' ') {  // Check if the character is a space
       // Clear the space for the 'space' character
       for (int i = 0; i < charHeight; i++) {
         for (int j = 0; j < charWidth; j++) {
           setPixelXY(x + j, y + i, 0, 0, 0);
         }
       }
-      x += charWidth; // Move x position for the next character, including space width
-      continue; // Skip the rest of the loop and continue with the next character
+      x += charWidth;  // Move x position for the next character, including space width
+      continue;        // Skip the rest of the loop and continue with the next character
     }
 
     int ascii = (int)ch;
     // Convert ASCII to index in alphabet array: 'A' = 65, 'Z' = 90, 'a' = 97, 'z' = 122
-    int index = (ascii >= 'A' && ascii <= 'Z') ? ascii - 'A' : (ascii >= 'a' && ascii <= 'z') ? ascii - 'a' : -1;
+    int index = (ascii >= 'A' && ascii <= 'Z') ? ascii - 'A' : (ascii >= 'a' && ascii <= 'z') ? ascii - 'a'
+                                                                                              : -1;
     if (index != -1) {
       // LETTER display
       for (int i = 0; i < charHeight; i++) {
@@ -537,14 +538,14 @@ void displayText(const char* text, int xPos, int yPos, bool ping) {
     }
     // Clear the spacing strip between characters, except after the last character or space
     if (k < textLength - 1) {
-        x += charWidth; // Adjust x for the width of the character just processed
-        for (int i = 0; i < charHeight; i++) {
-            setPixelXY(x, y + i, 0, 0, 0);  // Clear the pixels for spacing
-        }
-        x += spacing;  // Include the spacing for the next character position
+      x += charWidth;  // Adjust x for the width of the character just processed
+      for (int i = 0; i < charHeight; i++) {
+        setPixelXY(x, y + i, 0, 0, 0);  // Clear the pixels for spacing
+      }
+      x += spacing;  // Include the spacing for the next character position
     } else {
-        // For the last character, just move the position without clearing
-        x += charWidth + spacing;
+      // For the last character, just move the position without clearing
+      x += charWidth + spacing;
     }
   }
 }
@@ -586,28 +587,28 @@ void testCursor() {
 }
 
 void setMessage(const char* message) {
-  strncpy(scrollText, message, sizeof(scrollText) - 1); // Copy the incoming message to the global variable
-  scrollText[sizeof(scrollText) - 1] = '\0'; // Ensure null-termination
-  scrollTimer = millis(); // Reset the timer at the start of a new message
-  isScrolling = true; // Enable scrolling
+  strncpy(scrollText, message, sizeof(scrollText) - 1);  // Copy the incoming message to the global variable
+  scrollText[sizeof(scrollText) - 1] = '\0';             // Ensure null-termination
+  scrollTimer = millis();                                // Reset the timer at the start of a new message
+  isScrolling = true;                                    // Enable scrolling
 }
 
 void updateScroll() {
-  if (!isScrolling) return; // Exit if scrolling is not enabled
+  if (!isScrolling) return;  // Exit if scrolling is not enabled
 
-  long textPosX = millis() - scrollTimer; // Calculate the elapsed time since the scrolling started
-  textPosX = textPosX >> scrollSpeed; // Apply the scrolling speed
-  textPosX = textPosX * -1; // Invert the direction for leftward scrolling
+  long textPosX = millis() - scrollTimer;  // Calculate the elapsed time since the scrolling started
+  textPosX = textPosX >> scrollSpeed;      // Apply the scrolling speed
+  textPosX = textPosX * -1;                // Invert the direction for leftward scrolling
 
-  displayText(scrollText, textPosX + 15, 1, false); // Adjust +15 to set starting offset as needed
+  displayText(scrollText, textPosX + 15, 1, false);  // Adjust +15 to set starting offset as needed
 
   // Optionally, stop scrolling after the text has moved off screen
-  int textLength = strlen(scrollText)+4; // add 4 pretend characters to make it scroll all the way
-  int charWidth = 4; // Width of a character in the 5x4 grid
-  int spacing = 1; // Space between characters
-  int screenEnd = -(textLength * (charWidth + spacing)); // When to stop scrolling
+  int textLength = strlen(scrollText) + 4;                // add 4 pretend characters to make it scroll all the way
+  int charWidth = 4;                                      // Width of a character in the 5x4 grid
+  int spacing = 1;                                        // Space between characters
+  int screenEnd = -(textLength * (charWidth + spacing));  // When to stop scrolling
   if (textPosX < screenEnd) {
-    isScrolling = false; // Stop scrolling when the end of the message has passed
+    isScrolling = false;  // Stop scrolling when the end of the message has passed
   }
 }
 
@@ -621,9 +622,27 @@ void initLedGridState() {
   }
 }
 
+void drawRainbowStick() {
+  for (int i = 0; i < 8; i++) {
+    byte fadedAmount;
+    if(bitRead(mutes, i)){
+      fadedAmount = 5; 
+    } else {
+      fadedAmount = 1;
+    }
+    int thisTrackRed = trackColors[i][0] >> fadedAmount;
+    if (thisTrackRed < 5) thisTrackRed = 5;
+    int thisTrackGreen = trackColors[i][1] >> fadedAmount;
+    if (thisTrackGreen < 5) thisTrackGreen = 5;
+    int thisTrackBlue = trackColors[i][2] >> fadedAmount;
+    if (thisTrackBlue < 5) thisTrackBlue = 5;   
+        setPixelXY(lastStep-1, i, thisTrackRed, thisTrackGreen, thisTrackBlue);  // draw rainbow thingy
+  }
+}
 
-void noise(){
-  for(byte i = 0; i<128; i++){
-    setALEDHSV(i,random(0,255), 255,random(0,255));
+
+void noise() {
+  for (byte i = 0; i < 128; i++) {
+    setALEDHSV(i, random(0, 255), 255, random(0, 255));
   }
 }

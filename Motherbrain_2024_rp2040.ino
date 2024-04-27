@@ -1,4 +1,7 @@
 
+
+
+
 //USES Francois Best's MIDI library
 //USES Earle Philhower's  RP2040 Core
 //  TinyUSB stack, FLASH: 2MB (512KB FS)
@@ -20,6 +23,7 @@ things to add:
   - chain sequences (add own chain page ?) SONG MODE. Logic for songmode all tracks vs song mode 1 track
   - change MIDI clock input subdivision
   - Randomize
+  - LASTSTEP
   
 functions i need to be able to toggle on overview page:
   - select
@@ -68,6 +72,7 @@ int debugNum = 0;  // Variable to store a number that will br displaye on the sc
 
 #define overviewMode 0
 #define instSeqMode 1
+#define lastStepMode 2
 #define ALLTRACKS 8
 
 
@@ -114,7 +119,7 @@ Adafruit_USBD_MIDI usb_midi;
 
 
 
-//seq related
+//sequencer related
 byte stepDataSize = 64;
 byte solos = 0b00000000;
 uint16_t mutes = 0b00000000;
@@ -131,7 +136,7 @@ int viewOffset = 0;
 byte maxViewOffset = stepDataSize - 9;
 bool transposeState = false;
 byte transposeTrack = 0;
-
+byte lastStep = 16;
 
 #define DRUMSEQ 1
 #define CHORDSEQ 2
@@ -415,6 +420,9 @@ void loop() {  // the whole loop uses max 1040us, idles at 400 for cycles withou
     case overviewMode:
       handleOverviewMode();  //not responsible for crashes 100 - 150 us
       break;
+    case lastStepMode:
+      handleLastStepMode();
+      break;
   }
 
   displayPageNoBlink();  // 3us
@@ -457,6 +465,14 @@ void loop() {  // the whole loop uses max 1040us, idles at 400 for cycles withou
     FastLED.show();  //175us
   }
   //
+}
+
+
+void handleLastStepMode(){
+  displayText("LS", 1, 1,false);
+  drawCursor(currentStep);
+  drawRainbowStick();
+
 }
 
 unsigned long lastStepTime = 0;
@@ -504,7 +520,7 @@ void checkStepTimer() {
       counter24ppqn++;
       counter24ppqn = counter24ppqn % 6;
       if (counter24ppqn == 0) {
-        currentStep = (currentStep + 1) % GRIDSTEPS;
+        currentStep = (currentStep + 1) % lastStep;
       }
     }
   }

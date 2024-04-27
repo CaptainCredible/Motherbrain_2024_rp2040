@@ -219,15 +219,13 @@ void drawSeqOverview(uint8_t currentSeq) {
     if (thisTrackGreen < 5) thisTrackGreen = 5;
     int thisTrackBlue = trackColors[selectInst][2] >> fadedAmount;
     if (thisTrackBlue < 5) thisTrackBlue = 5;
-    for (uint8_t step = 0; step < GRIDSTEPS; step++) {
+    for (uint8_t step = 0; step < lastStep; step++) {
       if (seqMatrix[currentSeq][selectInst][step] > 0) {
         setPixelXY(step, selectInst, overviewColor[0], overviewColor[1], overviewColor[2]);  // assume i is the Y-coordinate here
       }
-      if (step == 15) {
-        setPixelXY(step, selectInst, thisTrackRed, thisTrackGreen, thisTrackBlue);  // assume i is the Y-coordinate here
-      }
     }
   }
+  drawRainbowStick();
 }
 
 void setNote(uint8_t sequence, uint8_t instrument, uint8_t step, uint8_t note) {
@@ -353,7 +351,7 @@ void handleStep(byte stepToHandle) {
               currentInstCol[2] = trackColors[currentTrack][2];
               //addSparkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan*4);  // make that pixel sparkle for 500ms, also invert Y axis
               addSporkle(currentStep, currentTrack, currentInstCol[0], currentInstCol[1], currentInstCol[2], overviewColor[0], overviewColor[1], overviewColor[2], sparkleLifespan * 2);  // make that pixel sparkle for 500ms, also invert Y axis
-              addSporkle(15, currentTrack, 255, 255, 255, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);
+              addSporkle(lastStep-1, currentTrack, 255, 255, 255, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);
               alreadyTriggeredSparkleForThisTrack = true;
             }
           } else {
