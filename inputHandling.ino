@@ -48,17 +48,17 @@ void instSeqModeButts(byte x, byte y) {
       case 1:
       case 2:
       case 3:
-        //SAVE
+        
         if (y == 0) {      //top row sequence (page) select buttons
           currentSeq = x;  // Seq 1 2 3 or 4
           numberToDisplay = x + 1;
           textDisplayStartTime = millis();
           displayNumber(x, 4, 3);
         }
+
+        //Save
         if (y == 7) {  //bottom row save buttons
           byte slotToSaveTo = x;
-          //debug("save instrument to slot ");
-          //debugln(slotToSaveTo);
           if (buttStates2D[13][7] == true) {  //is the save button pressed?
             saveCurrentSequenceToFile(slotSelect, currentInst);
           } else {
@@ -77,6 +77,13 @@ void instSeqModeButts(byte x, byte y) {
       case 5:
       case 6:
       case 7:
+      
+          if (y == 0) {      //top row sequence (page) select buttons
+          currentSeq = x;  // Seq 1 2 3 or 4
+          numberToDisplay = x + 1;
+          textDisplayStartTime = millis();
+          displayNumber(x, 4, 3);
+        }
         break;
       case 8:  //clear
         break;
