@@ -2,6 +2,14 @@ byte pixelMapArray[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 15, 14, 13, 12, 11, 10, 9, 8 
 byte pixelMapArrayWIDE[32] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16 };
 bool pianoKeys[12] = { true, false, true, false, true, true, false, true, false, true, false, true };  // true for hite keys, false for black keys
 
+//for red page number blink and currentBar blink
+unsigned long lastBlink = 0;
+int blinkDuration = 300;
+bool blinkState = false;
+
+
+
+
 byte pixelCount(int pxl) {  //translate from pixels numbered from left to right, to the snaked number configuration that the strip has
   int multiplier = pxl / 32;
   //int multiplier = pxl >> 5; // faster?
@@ -31,6 +39,10 @@ void setPixelXY(int Xcoord, int Ycoord, byte R, byte G, byte B) {
       setALED(pixelXY(Xcoord, Ycoord), R, G, B);
     }
   }
+}
+
+void setPixelXYbottomZero(int Xcoord, int Ycoord, byte R, byte G, byte B) {
+  setPixelXY(Xcoord, 7-Ycoord, R, G, B);
 }
 
 int gridBrightness = 5;  // shift amount
@@ -158,6 +170,22 @@ void drawCursor(byte x) {
   for (byte i = 0; i < GRIDROWS; i++) {
     softSetPixelXY(x, i, 8, 8, 8);
   }
+}
+
+void drawCurrentBar(){
+  if(!blinkState) // uses same flag as "pageNoBlink"
+  setPixelXY(currentBar, 0,100,100,0);
+}
+
+void displayPageNoBlink() {
+    if (millis() - lastBlink > blinkDuration) {
+      blinkState = !blinkState;
+      lastBlink = millis();
+    }
+    if (blinkState) {
+      setPixelXY(currentSeq, 0, 100, 0, 0);  // HERE!!!!
+    }
+  
 }
 
 
@@ -586,6 +614,25 @@ void testCursor() {
   }
 }
 
+void drawSongLength(){
+  for (byte i = 0; i<8; i++){
+    setPixelXY(songLength, i, 20,0,20);
+  }
+}
+
+void drawZero(){
+  for(byte i = 0; i < GRIDSTEPS; i++){
+    int zero = 12; // add 12 so we can display negative values a full octave beneath 
+    int posOnPage = zero - viewOffset;
+    if(posOnPage > 7){ //zero is above view
+    } else if(posOnPage < 0){//zero is below current view
+    } else { //zero is within current view
+      setPixelXYbottomZero(i, posOnPage, 20,0,255);
+    }
+  }
+}
+
+
 void setMessage(const char* message) {
   strncpy(scrollText, message, sizeof(scrollText) - 1);  // Copy the incoming message to the global variable
   scrollText[sizeof(scrollText) - 1] = '\0';             // Ensure null-termination
@@ -641,8 +688,13 @@ void drawRainbowStick() {
 }
 
 
+
 void noise() {
   for (byte i = 0; i < 128; i++) {
     setALEDHSV(i, random(0, 255), 255, random(0, 255));
   }
+}
+
+void drawExitBtn(){
+  setPixelXY(0,7,255,0,0);
 }

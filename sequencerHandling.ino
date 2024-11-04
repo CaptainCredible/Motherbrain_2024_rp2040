@@ -1,4 +1,7 @@
 
+
+
+
 uint64_t seqMatrix[SEQUENCES][INSTRUMENTS][GRIDSTEPS] = {  // declare 8 16X8 sequences, each row = an instrument, the bits in the number = the notes
   {
     // seq 1 2
@@ -174,20 +177,21 @@ void drawStepState(uint8_t sequence, uint8_t instrument, uint8_t step) {
   }
 }
 
-unsigned long lastBlink = 0;
-int blinkDuration = 300;
-bool blinkState = false;
+void drawTransposeSeq(){
+  // i am looking at pixels gridOffset to gridOffset + 7
 
-void displayPageNoBlink() {
-  
-    if (millis() - lastBlink > blinkDuration) {
-      blinkState = !blinkState;
-      lastBlink = millis();
+  for(byte i = 0; i < GRIDSTEPS; i++){
+    int thisStepTranspose = globalTransposeSeq[i] + 12; // add 12 so we can display negative values a full octave beneath 
+
+    int posOnPage = thisStepTranspose - viewOffset;
+    if(posOnPage > 7){ //transpose value is above current view
+      setPixelXYbottomZero(i, 7,10,5,50); //draw faint light at top
+    } else if(posOnPage < 0){//transpose value is below current view
+      setPixelXYbottomZero(i, 0, 10,5,50); //draw faint light at top
+    } else { //value is within current view
+      setPixelXYbottomZero(i, posOnPage, 100,50,200);
     }
-    if (blinkState) {
-      setPixelXY(currentSeq, 0, 100, 0, 0);  // HERE!!!!
-    }
-  
+  }
 }
 
 void displayMultiPageNoBlink() {
@@ -325,13 +329,18 @@ void checkAndHandleTimedNotes() {
 // HANDLE STEP //
 
 void handleStep(byte stepToHandle) {
+  int currentTranspose = globalTransposeSeq[currentBar];
   bool tracksBufferIsEmpty = true;
-  // handle notes THIS ONLY ACTUALLY SCANS THE CURRENTLY VIEWED INSTRUMENT!!!
   byte maxNotes = stepDataSize;  //our datastructure actually allows 64bit steps but microbitOrchestra currently only likes 16bit
-  for (byte currentTrack = 0; currentTrack < 8; currentTrack++) {
+  for (byte currentTrack = 0; currentTrack < 8; currentTrack++) { //scan through tracks
+    byte transposeMultiplier = 0; 
     if (!bitRead(mutes, currentTrack)) {  // if this track is not muted
-      tracksBuffer16x8[currentTrack] = seqMatrix[currentSeq][currentTrack][currentStep];
-
+      if(transposeActivated[currentTrack]){
+        transposeMultiplier = 1;
+      } else {
+        transposeMultiplier = 0; 
+      }
+      tracksBuffer16x8[currentTrack] = seqMatrix[currentSeq][currentTrack][currentStep] << (currentTranspose*transposeMultiplier); //put this step of this track in the tracksBuffer
       if (tracksBuffer16x8[currentTrack != 0]) {
         tracksBufferIsEmpty = false;  // keep track of whether the tracksbuffer has any data that needs to be sent.
       }
@@ -341,8 +350,7 @@ void handleStep(byte stepToHandle) {
       for (byte i = 0; i < maxNotes; i++) {
         byte actualNote = i;
         if (getNote(currentSeq, currentTrack, currentStep, i)) {  //we found a note
-
-          triggerMidiNote(actualNote, currentTrack);  //add one because midichannels start with 1
+          triggerMidiNote(actualNote + (currentTranspose*transposeMultiplier), currentTrack);  //add one because midichannels start with 1
           //need added logic here to only make sparkles fot the track we are viewing
           if (mode == overviewMode) {
             if (!alreadyTriggeredSparkleForThisTrack) {
@@ -356,7 +364,7 @@ void handleStep(byte stepToHandle) {
             }
           } else {
             if ((i >= viewOffset && i <= viewOffset + 7) && (currentTrack == currentInst)) {                                                                        // if the triggered note is within the view and we are viewing the track that is playing the note
-              addSporkle(currentStep, (GRIDROWS - 1) - (i - viewOffset), 200, 200, 200, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
+              addSporkle(currentStep, (GRIDROWS - 1) - (i - viewOffset), 100, 100, 200, currentInstCol[0], currentInstCol[1], currentInstCol[2], sparkleLifespan);  // make that pixel sparkle for 500ms, also invert Y axis
             }
           }
         }
@@ -376,7 +384,7 @@ void triggerMidiNote(byte noteToSend, byte channelToSend) {
     if (!midiClockRunning) {                                 // this keeps us from sending midi if we are busy receiving midi.
       USBMIDI.sendNoteOn(midiNote, 126, channelToSend + 1);  // TRY COMMENTING OUT THIS!!!
     }
-    addTimedNote(midiNote, 50, channelToSend);  // Assuming 50ms is the duration for each note ALSO TRY TO REMOVE THIS AS TEST???
+    addTimedNote(midiNote, 50, channelToSend+1);  // Assuming 50ms is the duration for each note ALSO TRY TO REMOVE THIS AS TEST???
   }
 }
 

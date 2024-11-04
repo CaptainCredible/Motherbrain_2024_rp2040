@@ -20,7 +20,9 @@
 /*
 
 things to add:
+
   - chain sequences (add own chain page ?) SONG MODE. Logic for songmode all tracks vs song mode 1 track
+  - chain transposes
   - change MIDI clock input subdivision
   - Randomize
   - LASTSTEP
@@ -73,6 +75,7 @@ int debugNum = 0;  // Variable to store a number that will br displaye on the sc
 #define overviewMode 0
 #define instSeqMode 1
 #define lastStepMode 2
+#define globalTransposeMode 11
 #define ALLTRACKS 8
 
 
@@ -118,12 +121,19 @@ int oldTempo = 120;
 Adafruit_USBD_MIDI usb_midi;
 
 
-
 //sequencer related
+bool transposeActivated[8] = {true, false, false, false, true, false, false, true};
+
+int globalTransposeSeq[16] = {
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+};
+
 byte stepDataSize = 64;
 byte solos = 0b00000000;
 uint16_t mutes = 0b00000000;
 volatile int currentStep = -1;
+int currentBar = -1; // where are we in the song
+uint8_t songLength = 16;
 byte currentSeq = 0;
 byte currentSeqs[8] = {0,0,0,0,0,0,0,0};
 byte currentInst = 0;
@@ -134,9 +144,14 @@ unsigned long tempoMicros24 = 4167;
 uint16_t numberToDisplay = 0;
 int viewOffset = 0;
 byte maxViewOffset = stepDataSize - 9;
-bool transposeState = false;
-byte transposeTrack = 0;
+bool transposeState = false; // flag to see if insta-transpose button is held in
+byte transposeTrack = 0; //variable to hold the track number to insta-transpose
 byte lastStep = 16;
+
+void increaseBar(){
+  currentBar++;
+  if(currentBar >= songLength){currentBar = 0;};
+}
 
 #define DRUMSEQ 1
 #define CHORDSEQ 2
@@ -218,7 +233,7 @@ int rotaryMasterCounter = 0;  // Keeps track of the encoder position
 int clkLastState = 0;         // Stores the last state of the CLK pin
 int swLastState = 0;
 unsigned long lastClkTime = 0;       // the last time the output pin was toggled
-unsigned long clkDebounceDelay = 1;  // the debounce time; increase if the output flickers
+unsigned long clkDebounceDelay = 4;  // the debounce time; increase if the output flickers //was 1
 unsigned long lastSwTime = 0;
 unsigned long swDebounceTime = 5;
 int swState = 0;
@@ -363,7 +378,7 @@ void setup() {
   recallSequenceFromFile(7, ALLTRACKS);
   currentSeq = 0;
   if (testColor == 0) {
-    setMessage("STANDALONE");
+    setMessage("STA");
     scrollSpeed = 6;
   } else {
     setMessage("USB");
@@ -423,9 +438,10 @@ void loop() {  // the whole loop uses max 1040us, idles at 400 for cycles withou
     case lastStepMode:
       handleLastStepMode();
       break;
+    case globalTransposeMode:
+      handleGlobalTransposeMode();
+      break;
   }
-
-  displayPageNoBlink();  // 3us
 
   updateSparkles();  // not responsible, 340us
 
@@ -446,16 +462,8 @@ void loop() {  // the whole loop uses max 1040us, idles at 400 for cycles withou
   while (USBMIDI.read()) {  //2us idle, 50 - 150 for a note, 33 - 60 for a midi clock
   }
 
-
-
   updateScroll();
-  /*  
-  textPosX = millis()-scrollTimer;
-  textPosX = textPosX>>7;
-  textPosX = textPosX*-1;
 
-  displayText("text", textPosX + 15, 1,false);
-  */
   fastLEDUpdateCounter++;
   fastLEDUpdateCounter = fastLEDUpdateCounter % 16;  // this MASSIVELY inproves performance, %16 gives me approx 140FPS
   if (fastLEDUpdateCounter == 0) {
@@ -464,7 +472,6 @@ void loop() {  // the whole loop uses max 1040us, idles at 400 for cycles withou
     }
     FastLED.show();  //175us
   }
-  //
 }
 
 
@@ -472,13 +479,13 @@ void handleLastStepMode(){
   displayText("LS", 1, 1,false);
   drawCursor(currentStep);
   drawRainbowStick();
-
 }
 
 unsigned long lastStepTime = 0;
 void handleOverviewMode() {
   drawCursor(currentStep);
   drawSeqOverview(currentSeq);
+  drawCurrentBar();
   for (int row = 0; row < GRIDSTEPS; row++) {
     for (int col = 0; col < GRIDROWS; col++) {
       if (buttStates2D[row][col] == true) {
@@ -486,6 +493,21 @@ void handleOverviewMode() {
       }
     }
   }
+  displayPageNoBlink();  // 3us
+}
+
+void handleGlobalTransposeMode(){
+  currentInstCol[0] = 200;
+  currentInstCol[1] = 200;
+  currentInstCol[2] = 200;
+  drawHelpers();
+  drawPianoRoll();
+  drawZero();
+  drawTransposeSeq();
+  drawSongLength();
+  drawCurrentBar();
+  displayPageNoBlink();  // 3us
+  drawCursor(currentStep);
 }
 
 void handleInstSeqMode() {
@@ -506,6 +528,7 @@ void handleInstSeqMode() {
       }
     }
   }
+  displayPageNoBlink();  // 3us
 }
 
 int lastHandledStep = -2;
@@ -526,10 +549,14 @@ void checkStepTimer() {
   }
 
   if (currentStep != lastHandledStep) {
+    if(currentStep == 0){
+      increaseBar();
+    }
     if (currentStep >= 0) {
       handleStep(currentStep);
     }
     lastHandledStep = currentStep;
+    
   }
 }
 

@@ -24,6 +24,9 @@ void handleButtPress(byte x, byte y) {  //also handles buttrelease
     case lastStepMode:
       lastStepModeButts(x, y);
       break;
+    case globalTransposeMode:
+      globalTransposeModeButts(x, y);
+      break;
   }
 }
 
@@ -31,7 +34,6 @@ void handleButtRelease(byte x, byte y) {  //also handles buttrelease
   testColor = 0;
   byte flippedY = 8 - y;
   byte noteNumber = 64 + flippedY;
-  //MIDI.sendNoteOff(noteNumber, 0, 1);
 }
 
 
@@ -48,7 +50,7 @@ void instSeqModeButts(byte x, byte y) {
       case 1:
       case 2:
       case 3:
-        
+
         if (y == 0) {      //top row sequence (page) select buttons
           currentSeq = x;  // Seq 1 2 3 or 4
           numberToDisplay = x + 1;
@@ -77,8 +79,8 @@ void instSeqModeButts(byte x, byte y) {
       case 5:
       case 6:
       case 7:
-      
-          if (y == 0) {      //top row sequence (page) select buttons
+
+        if (y == 0) {      //top row sequence (page) select buttons
           currentSeq = x;  // Seq 1 2 3 or 4
           numberToDisplay = x + 1;
           textDisplayStartTime = millis();
@@ -144,12 +146,27 @@ void instSeqModeButts(byte x, byte y) {
   }
 }
 
-void lastStepModeButts(byte x, byte y){
-  lastStep = x+1;
+void lastStepModeButts(byte x, byte y) {
+  lastStep = x;
 }
 
 const byte muteSoloRow = 14;
 const byte selectPreviewRow = 15;
+
+void globalTransposeModeButts(byte x, byte y) {
+  if (!shiftState) {
+    byte bottomToTopVal = 7 - y;
+    debug("bottomToTopVal = ");
+    debugln(bottomToTopVal);
+    int actualTransposeVal = bottomToTopVal + viewOffset - 12;  // subtract 12 because view is offset by 12 so we can see negative values
+    debug("transposeVal = ");
+    debugln(actualTransposeVal);
+    globalTransposeSeq[x] = actualTransposeVal;
+  } else {
+    songLength = x+1;
+  }
+}
+
 void overviewModeButts(byte x, byte y) {
   byte trackSelect = 0;
   byte slotSelect = x;  // Assign values within the cases
@@ -166,7 +183,7 @@ void overviewModeButts(byte x, byte y) {
 
     case 13:
       if (y == 0) {
-        if(shiftState){
+        if (shiftState) {
           mode = lastStepMode;
         }
       }
@@ -184,6 +201,9 @@ void overviewModeButts(byte x, byte y) {
 
     case 11:
       // transpose is handled from rotaryEncoder
+      if (y == 7 && shiftState) {
+        mode = globalTransposeMode;
+      }
       break;
 
     case 10:
@@ -317,6 +337,7 @@ void scanButtsNKnobs() {
   rotarySwitchState = !digitalRead(swPin);
   utilState = !digitalRead(UTILPIN);
   if (utilState != oldUtilState) {
+    isScrolling = false;  //make any scrolling text disappear
     oldUtilState = utilState;
     if (utilState) {
       if (mode == overviewMode) {
@@ -333,9 +354,9 @@ void scanButtsNKnobs() {
   if (millis() > playButtonDebounceTimer) {
     playButtonState = !digitalRead(PLAYPAUSEPIN);
     if (playButtonState != oldPlayButtonState) {
-      playButtonDebounceTimer = millis() + 30;        // Update the time of state change
-      handlePlayButtonStateChange();         // Handle the state change
-      oldPlayButtonState = playButtonState;  // Update the old state only after confirming a state change
+      playButtonDebounceTimer = millis() + 30;  // Update the time of state change
+      handlePlayButtonStateChange();            // Handle the state change
+      oldPlayButtonState = playButtonState;     // Update the old state only after confirming a state change
     }
   }
 }
@@ -346,6 +367,7 @@ void handlePlayButtonStateChange() {
     if (!midiClockRunning) {
       if (!shiftState) {
         playing = !playing;
+        isScrolling = false;
       } else {
         playing = true;
       }
@@ -358,13 +380,15 @@ void handlePlayButtonStateChange() {
         counter24ppqn = 0;
         lastStepTime = micros();
         currentStep = 0;
+        currentBar = -1;
         handleStep(currentStep);
       }
     } else {
-      if (shiftState) {
+      if (shiftState) {  // shift+play = reset
         //HWMIDI.sendStop();
         lastStepTime = micros();
         currentStep = 0;
+        currentBar = -1;
         midiClockCounter = 0;
         counter24ppqn = 0;
         handleStep(currentStep);
@@ -515,7 +539,7 @@ void rotaryMove(int moveAmount) {
     }
   }
 
-  if (transposeState) {
+  if (transposeState) {  // if transpose is held in for this track
     if (moveAmount > 0) {
       transpose(currentSeq, transposeTrack, true);
     } else {
