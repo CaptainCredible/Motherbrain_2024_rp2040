@@ -147,7 +147,7 @@ void instSeqModeButts(byte x, byte y) {
 }
 
 void lastStepModeButts(byte x, byte y) {
-  lastStep = x;
+  lastStep = x+1;
 }
 
 const byte muteSoloRow = 14;
@@ -174,6 +174,7 @@ void overviewModeButts(byte x, byte y) {
     case selectPreviewRow:  //15
       currentInst = y;
       mode = instSeqMode;
+      displayText(instNames[currentInst], 0,3,true,300);
       break;
 
     case muteSoloRow:  //14
@@ -203,6 +204,7 @@ void overviewModeButts(byte x, byte y) {
       // transpose is handled from rotaryEncoder
       if (y == 7 && shiftState) {
         mode = globalTransposeMode;
+        displayText("trs", 0,3, true, 400);
       }
       break;
 
@@ -344,6 +346,8 @@ void scanButtsNKnobs() {
         //mode = instSeqMode;
       } else {
         mode = overviewMode;
+        displayText("SEQ", 0,3, true, 300);
+
       }
       //debugln("butt pressed");
     } else {
@@ -381,7 +385,7 @@ void handlePlayButtonStateChange() {
         lastStepTime = micros();
         currentStep = 0;
         currentBar = -1;
-        handleStep(currentStep);
+        //handleStep(currentStep); // causes double step handling
       }
     } else {
       if (shiftState) {  // shift+play = reset
@@ -445,7 +449,7 @@ void handleRotaryPush() {  //rotaryclick
       if (rotaryPushState) {
         currentScale += 1;
         currentScale = currentScale % 5;
-        displayText(scaleNames[currentScale], 0, 0, true);
+        displayText(scaleNames[currentScale], 0, 0, true, 500);
       }
       lastSwTime = millis();
     }

@@ -1,11 +1,7 @@
-
-
-
-
-//USES Francois Best's MIDI library
-//USES Earle Philhower's  RP2040 Core
-//  TinyUSB stack, FLASH: 2MB (512KB FS)
-//USES FastLed library
+// USES Francois Best's MIDI library
+// USES Earle Philhower's  RP2040 Core
+// TinyUSB stack, FLASH: 2MB (512KB FS)
+// USES FastLed library
 
 
 
@@ -17,12 +13,27 @@
 
 */
 
+
+
+
 /*
 
-things to add:
+things to fix:
+- colors on helpers in transposeseq
+- blink speed / colors for currentpage / current bar (currentBar turquoise, currentPage = red, pattern per track = yellow)
 
+things to add:
   - chain sequences (add own chain page ?) SONG MODE. Logic for songmode all tracks vs song mode 1 track
-  - chain transposes
+  
+  SONG MODE:
+  - Red = global pattern seq
+  - yellow = per track pattern seq
+  - Make a song seq per instrument
+  - shift + button to enable / disable song seq for this track OR! if whole seq is 1 then it is not enabled
+  - length per track song seq?
+  - global song mode enable
+
+  - song Cursor for transpose chain page and pattern chain page
   - change MIDI clock input subdivision
   - Randomize
   - LASTSTEP
@@ -51,6 +62,8 @@ functions i need to be able to toggle on setup page:
 
 
 int debugNum = 0;  // Variable to store a number that will br displaye on the scrim
+
+const char* instNames[8] = {"Bob", "Tim", "Ted", "Pat", "Cat", "Dad", "Mum", "Zim"};
 
 #define FASTLED_RP2040_CLOCKLESS_PIO true  //gives me error: #if with no expression 7 | #if FASTLED_RP2040_CLOCKLESS_PIO
 #define DEBUG_ENABLED true
@@ -122,6 +135,11 @@ Adafruit_USBD_MIDI usb_midi;
 
 
 //sequencer related
+
+uint8_t songSeqLength[8] = {4,4,4,4,4,4,4,4};
+bool songSeqEnabled[8] = {false, false, false, false, false, false, false, false};
+uint8_t songSeq[8][8] = {{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0}}; 
+
 bool transposeActivated[8] = {true, false, false, false, true, false, false, true};
 
 int globalTransposeSeq[16] = {
@@ -443,7 +461,7 @@ void loop() {  // the whole loop uses max 1040us, idles at 400 for cycles withou
       break;
   }
 
-  updateSparkles();  // not responsible, 340us
+  updateSparkles();  // 340us
 
   if (millis() < textDisplayStartTime + textDisplayTimeout) {
     displayNumber(numberToDisplay, 4, 3);
@@ -476,7 +494,7 @@ void loop() {  // the whole loop uses max 1040us, idles at 400 for cycles withou
 
 
 void handleLastStepMode(){
-  displayText("LS", 1, 1,false);
+  displayText("LS", 1, 1,false,100);
   drawCursor(currentStep);
   drawRainbowStick();
 }

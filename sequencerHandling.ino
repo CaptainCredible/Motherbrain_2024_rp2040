@@ -329,6 +329,8 @@ void checkAndHandleTimedNotes() {
 // HANDLE STEP //
 
 void handleStep(byte stepToHandle) {
+  debug("handled step");
+  debugln(stepToHandle);
   int currentTranspose = globalTransposeSeq[currentBar];
   bool tracksBufferIsEmpty = true;
   byte maxNotes = stepDataSize;  //our datastructure actually allows 64bit steps but microbitOrchestra currently only likes 16bit
@@ -379,7 +381,7 @@ void handleStep(byte stepToHandle) {
 
 void triggerMidiNote(byte noteToSend, byte channelToSend) {
   if (numActiveNotes < maxTimedNotes) {
-    byte midiNote = noteToSend + 60;
+    byte midiNote = noteToSend + 36;
     HWMIDI.sendNoteOn(midiNote, 127, channelToSend + 1);
     if (!midiClockRunning) {                                 // this keeps us from sending midi if we are busy receiving midi.
       USBMIDI.sendNoteOn(midiNote, 126, channelToSend + 1);  // TRY COMMENTING OUT THIS!!!

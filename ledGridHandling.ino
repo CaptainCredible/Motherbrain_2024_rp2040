@@ -514,7 +514,7 @@ void displayNumber(int number, int xPos, int yPos) {
 
 
 
-void displayText(const char* text, int xPos, int yPos, bool ping) {
+void displayText(const char* text, int xPos, int yPos, bool ping, uint16_t textDur) {
   int x = xPos;
   int y = yPos;
   int charWidth = 4;                                             // Width of a character in the 5x4 grid
@@ -554,7 +554,7 @@ void displayText(const char* text, int xPos, int yPos, bool ping) {
           int currentY = y + i;
           if (alphabet[index][i][j] == '#') {
             if (ping) {
-              addSparkle(currentX, currentY, 0, 0, 0, 1000);
+              addSparkle(currentX, currentY, 0, 0, 0, textDur);
             } else {
               setPixelXY(currentX, currentY, 100, 100, 100);  // show pixel
             }
@@ -647,7 +647,7 @@ void updateScroll() {
   textPosX = textPosX >> scrollSpeed;      // Apply the scrolling speed
   textPosX = textPosX * -1;                // Invert the direction for leftward scrolling
 
-  displayText(scrollText, textPosX + 15, 1, false);  // Adjust +15 to set starting offset as needed
+  displayText(scrollText, textPosX + 15, 1, false, 0);  // Adjust +15 to set starting offset as needed
 
   // Optionally, stop scrolling after the text has moved off screen
   int textLength = strlen(scrollText) + 4;                // add 4 pretend characters to make it scroll all the way
@@ -682,8 +682,14 @@ void drawRainbowStick() {
     int thisTrackGreen = trackColors[i][1] >> fadedAmount;
     if (thisTrackGreen < 5) thisTrackGreen = 5;
     int thisTrackBlue = trackColors[i][2] >> fadedAmount;
-    if (thisTrackBlue < 5) thisTrackBlue = 5;   
-        setPixelXY(lastStep-1, i, thisTrackRed, thisTrackGreen, thisTrackBlue);  // draw rainbow thingy
+    if (thisTrackBlue < 5) thisTrackBlue = 5;
+        if(lastStep == 16){
+          setPixelXY(lastStep-1, i, thisTrackRed, thisTrackGreen, thisTrackBlue);  // draw rainbow thingy
+        } else {
+          setPixelXY(lastStep, i, thisTrackRed, thisTrackGreen, thisTrackBlue);  // draw rainbow thingy
+          setPixelXY(lastStep-1, i, thisTrackRed>>4, thisTrackGreen>>4, thisTrackBlue>>4);  // draw rainbow thingy
+        }
+        
   }
 }
 
